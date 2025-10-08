@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useContext } from "react";
 import * as auth from "../api/auth";
 import { useParams, useNavigate } from "react-router-dom";
+import Cookies from 'js-cookie';
+import { v4 as uuidv4 } from 'uuid';
 import { LoginContext } from "../contexts/LoginContextProvider";
 import api from "../api/api";
 import Header from "../header/Header";
@@ -8,6 +10,7 @@ import "./Venue.css"
 
 const Venue = () => {
     const navigate = useNavigate();
+
     const { isLogin, userInfo } = useContext(LoginContext);
 
     const { venueId } = useParams();
@@ -22,13 +25,10 @@ const Venue = () => {
 
     const [performanceList, setPerformanceList] = useState([]);
 
-    const removeAllSpace = (str) => {
-        return str.replace(/\s+/g, "")
-    }
 
     const getPerformanceList = async () => {
         try {
-            const response = await api.get(`/performance/list/${venueId}`);
+            const response = await api.get(`/api/performance/list/${venueId}`);
 
             console.log(response.data)
 
@@ -55,7 +55,14 @@ const Venue = () => {
 
             const queueType = "reserve_" + performanceTitle
 
-            const res = await auth.register(queueType, encodedUserId)
+            const idempotencyKey = uuidv4();
+
+            const headers = {
+                "idempotencyKey": idempotencyKey,
+            };
+            console.log(idempotencyKey)
+
+            const res = await auth.register(queueType, encodedUserId, headers)
 
             console.log("status:", res.status + " performanceId : " + performanceId + " queueType : " + queueType);
 
@@ -96,7 +103,7 @@ const Venue = () => {
         console.log("SSE 연결 시도:", userId);
         console.log("userId: " + userId)
 
-        const sse = new EventSource(`http://localhost:8080/queue/stream?userId=${userId}&queueType=${reserveQueueType}`);
+        const sse = new EventSource(`http://localhost:8079/queue/stream?userId=${userId}&queueType=${reserveQueueType}`);
 
         sse.onopen = () => console.log("SSE 연결 성공!");
 
@@ -127,7 +134,7 @@ const Venue = () => {
                     localStorage.removeItem("is_waiting");
 
                     // 쿠키 생성 후 타겟 페이지 이동
-                    fetch(`http://localhost:8080/queue/createCookie?performanceId=${performanceId}&userId=${userId}`, {
+                    fetch(`http://localhost:8079/queue/createCookie?queueType=${reserveQueueType}&userId=${userId}`, {
                         method: 'GET',
                         credentials: 'include'
                     })
@@ -157,6 +164,50 @@ const Venue = () => {
 
     }, [isWaiting, userId]);
 
+    const handleCancelReserve = (queueCategory) => {
+        const user_id = localStorage.getItem('user_id')
+
+        const confirm = window.confirm("예매를 취소하시겠습니까 ?")
+        if (!confirm) return;
+
+        removeAllowUser(user_id, queueCategory)
+        localStorage.removeItem('user_id')
+        localStorage.removeItem('expireTime')
+        Cookies.remove(`${performanceId}_user-access-cookie_${user_id}`)
+        alert("예매 취소가 완료되었습니다.");
+        navigate('/')
+    }
+
+    const removeAllowUser = async (remove_user_id, queueCategory) => {
+
+        console.log("asdad:" + reserveQueueType)
+
+        try {
+            const res = await fetch(`http://localhost:8079/queue/cancel?userId=${remove_user_id}&queueType=${reserveQueueType}&queueCategory=${queueCategory}`, {
+                method: 'DELETE',
+            });
+
+            const errorText = await res.text(); // 응답 본문 내용 확인
+            console.log("응답 상태코드:", res.status);
+            console.log("에러 본문 내용:", errorText);
+
+            if (res.ok) {
+                alert("예매 취소 완료");
+            } else {
+                const message = await res.text(); // "이미 삭제가 처리된 사용자"
+                console.log("삭제 실패 메세지 : " + message)
+                throw new Error("대기열 삭제 실패");
+            }
+
+        } catch (err) {
+            alert(err.message);
+        }
+    }
+
+    const removeAllSpace = (str) => {
+        return str.replace(/\s+/g, "")
+    }
+
     // // 대기열에서 새로고침 시 맨 뒤로 밀리게 처리
     // useEffect(() => {
     //   if (!isWaiting || !userId) return;
@@ -185,7 +236,10 @@ const Venue = () => {
                     <h3 style={{ marginTop: "30px" }}>현재 대기 순번: <strong>{ranking}번</strong></h3>
                 )}
                 {!confirmed && (
-                    <button className="cancel-button">
+                    <button
+                        className="cancel-button"
+                        onClick={() => handleCancelReserve("wait")}
+                    >
                         취소하기
                     </button>
                 )}
