@@ -9,7 +9,7 @@ LoginContext.displayName = "LoginContextName";
 
 const LoginContextProvider = ({ children }) => {
 
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   const [isLogin, setIsLogin] = useState(false);
 
@@ -61,7 +61,7 @@ const LoginContextProvider = ({ children }) => {
       const data = response.data;
       const status = response.status;
       const headers = response.headers;
-      const authorization = headers.access;
+      const authorization = headers.authorization;
 
       if (status === 200) {
         Cookies.set("accessToken", authorization);

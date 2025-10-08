@@ -17,7 +17,7 @@ const Header = () => {
     <header>
       <div className="logo">
         <Link to="/">
-          <span className="logo-text">Reserve System Project</span>
+          <span className="logo-text">통한 예약 프로젝트</span>
         </Link>
       </div>
       <div className="util">

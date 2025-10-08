@@ -11,7 +11,6 @@ const Reward = () => {
 
     const { userInfo } = useContext(LoginContext);
     const [reward, setReward] = useState();
-    const [lastRewardDate, setLastRewardDate] = useState(userInfo?.last_reward_date);
 
     const formatDate = (date) => {
         const yyyy = date.getFullYear();
@@ -45,7 +44,6 @@ const Reward = () => {
             if (response.status === 200) {
                 alert("200 포인트 지급 성공 !");
                 setReward(prev => prev + 200);
-                setLastRewardDate(today);
                 navigate("/reward");
             }
 
@@ -86,7 +84,6 @@ const Reward = () => {
 
     useEffect(() => {
         setReward(userInfo?.reward);
-        setLastRewardDate(userInfo?.last_reward_date);
     }, [userInfo]);
 
     return (
@@ -98,16 +95,6 @@ const Reward = () => {
                     보유 리워드: <strong>{reward}</strong> 포인트
                 </p>
                 <p style={{ marginBottom: "40px" }}>하루 한 번 리워드를 받아보세요!</p>
-
-                <div className="calendar-grid">
-                    <div
-                        className={`calendar-day ${lastRewardDate === today ? "rewarded" : ""
-                            }`}
-                    >
-                        {new Date().toLocaleDateString().substring(0, 10)}
-                    </div>
-                </div>
-
                 <button onClick={setRewardDate} className="reward-button">
                     리워드 받기
                 </button>

@@ -25,7 +25,7 @@ const ScreeningSchedule = () => {
 
     const fetchScreenList = async () => {
         try {
-            const response = await api.get(`/screenInfo/list/${venueId}/${performanceId}`);
+            const response = await api.get(`/api/screenInfo/list/${venueId}/${performanceId}`);
             console.log("조회된 상영 정보:", response.data);
 
             const grouped = {};
@@ -49,13 +49,13 @@ const ScreeningSchedule = () => {
         }
     };
 
-    const handleCancelReserve = () => {
+    const handleCancelReserve = (queueCategory) => {
         const user_id = localStorage.getItem('user_id')
 
         const confirm = window.confirm("예매를 취소하시겠습니까 ?")
         if (!confirm) return;
 
-        removeAllowUser(user_id)
+        removeAllowUser(user_id, queueCategory)
         localStorage.removeItem('user_id')
         localStorage.removeItem('expireTime')
         Cookies.remove(`${performanceId}_user-access-cookie_${user_id}`)
@@ -63,12 +63,10 @@ const ScreeningSchedule = () => {
         navigate('/')
     }
 
-    const removeAllowUser = async (remove_user_id) => {
-
-        console.log("asdad:" + reserveQueueType)
+    const removeAllowUser = async (remove_user_id, queueCategory) => {
 
         try {
-            const res = await fetch(`http://localhost:8080/queue/cancel?userId=${remove_user_id}&queueType=${reserveQueueType}&queueCategory=allow`, {
+            const res = await fetch(`http://localhost:8079/queue/cancel?userId=${remove_user_id}&queueType=${reserveQueueType}&queueCategory=${queueCategory}`, {
                 method: 'DELETE',
             });
 
@@ -109,7 +107,7 @@ const ScreeningSchedule = () => {
             const diff = Math.floor((expireTime - now) / 1000)
 
             if (diff <= 0) {
-                handleCancelReserve()
+                handleCancelReserve("allow")
                 clearInterval(interval)
                 localStorage.removeItem('expireTime')
                 Cookies.remove(`reserve_user-access-cookie_${user_id}`)
@@ -129,7 +127,7 @@ const ScreeningSchedule = () => {
             const user_id = localStorage.getItem('user_id')
             console.log("userId : " + user_id)
 
-            const token = Cookies.get(`${performanceId}_user-access-cookie_${user_id}`)
+            const token = Cookies.get(`reserve_user-access-cookie_${user_id}`)
             console.log(token)
 
             if (!token || !user_id) {
@@ -137,10 +135,10 @@ const ScreeningSchedule = () => {
                 navigate('/')
                 return
             }
-
+ 
             try {
                 const res = await fetch(
-                    `http://localhost:8080/queue/isValidateToken?userId=${user_id}&performanceId=${performanceId}&token=${token}`
+                    `http://localhost:8079/queue/isValidateToken?userId=${user_id}&queueType=${reserveQueueType}&token=${token}`
                 )
 
                 if (!res.ok) {
@@ -184,7 +182,10 @@ const ScreeningSchedule = () => {
                                     <p className="target-timer">
                                         남은 시간: {minutes}분 {seconds < 10 ? `0${seconds}` : seconds}초
                                     </p>
-                                    <button onClick={handleCancelReserve} className="back-button">
+                                    <button 
+                                        className="back-button"
+                                        onClick={() => handleCancelReserve("allow")}
+                                    >
                                         예매 취소
                                     </button>
                                 </div>

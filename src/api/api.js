@@ -1,7 +1,9 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
-const api = axios.create();
+const api = axios.create({
+  baseURL: 'http://localhost:8079', 
+});
 
 // 요청 인터셉터: 요청 시 accessToken을 자동으로 추가
 api.interceptors.request.use(
@@ -34,7 +36,7 @@ api.interceptors.response.use((response) => response,
 
       try {
 
-        const response = await api.post('/reToken', {}, { withCredentials: true });
+        const response = await api.post('/api/reToken', {}, { withCredentials: true });
 
         console.log(response)
 
