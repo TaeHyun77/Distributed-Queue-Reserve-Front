@@ -14,11 +14,14 @@ const Payment = () => {
     const navigate = useNavigate();
     const { userInfo } = useContext(LoginContext);
 
-    const [useReward, setUseReward] = useState(false); 
+    const [useReward, setUseReward] = useState(false);
 
     const price = seatsInfo.seatPrice * seatsInfo.personCount; // 총 가격
     const discount = useReward ? Math.min(userInfo?.reward, price) : 0;  // 할인 가격
 
+    /**
+     * 결제 요청
+     */
     const handlePayment = async () => {
 
         const check = window.confirm("결제 하시겠습니까 ?")
@@ -28,7 +31,6 @@ const Payment = () => {
         const headers = {
             'Idempotency-key': idempotencyKey,
         };
-        console.log(idempotencyKey)
 
         const paymentInfo = {
             screenInfoId: seatsInfo.screenInfoId,
@@ -37,7 +39,7 @@ const Payment = () => {
         }
 
         try {
-            const response = await auth.reserveSeat(paymentInfo, headers);
+            const response = await auth.payAndReserve(paymentInfo, headers);
 
             if (response.status === 200) {
                 alert("결제 성공 ! 좌석이 예약되었습니다.");
@@ -52,7 +54,7 @@ const Payment = () => {
                 switch (errorMessage) {
                     case "TIMEOUT":
                         alert("응답 지연으로 재시도합니다...");
-                        return await auth.reserveSeat(seatsInfo, headers)
+                        return await auth.payAndReserve(seatsInfo, headers)
                     case "SEAT_ALREADY_RESERVED":
                         alert("이미 예약된 좌석이 포함되어 있습니다.");
                         break;

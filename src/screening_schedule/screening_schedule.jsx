@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import api from "../api/api";
+import * as auth from "../api/auth";
 import Cookies from 'js-cookie';
 import Header from "../header/Header";
 import "./screening_schedule.css";
@@ -23,7 +24,10 @@ const ScreeningSchedule = () => {
         return match ? match[2] : null
     }
 
-    const fetchScreenList = async () => {
+    /**
+     * 공연 정보 리스트
+     */
+    const getScreenList = async () => {
         try {
             const response = await api.get(`/api/screenInfo/list/${venueId}/${performanceId}`);
             console.log("조회된 상영 정보:", response.data);
@@ -49,13 +53,19 @@ const ScreeningSchedule = () => {
         }
     };
 
+    /**
+     * 허용열 등록 취소 요청
+     */
     const handleCancelReserve = (queueCategory) => {
         const user_id = localStorage.getItem('user_id')
 
         const confirm = window.confirm("예매를 취소하시겠습니까 ?")
         if (!confirm) return;
 
-        removeAllowUser(user_id, queueCategory)
+        const queueType = reserveQueueType.split(":")[0]
+        console.log("asdadasd :" + queueCategory)
+
+        removeAllowUser(user_id, queueType, queueCategory)
         localStorage.removeItem('user_id')
         localStorage.removeItem('expireTime')
         Cookies.remove(`${performanceId}_user-access-cookie_${user_id}`)
@@ -63,21 +73,18 @@ const ScreeningSchedule = () => {
         navigate('/')
     }
 
-    const removeAllowUser = async (remove_user_id, queueCategory) => {
+    /**
+     * 허용열 등록 취소 요청
+     */
+    const removeAllowUser = async (user_id, queueType, queueCategory) => {
 
         try {
-            const res = await fetch(`http://localhost:8079/queue/cancel?userId=${remove_user_id}&queueType=${reserveQueueType}&queueCategory=${queueCategory}`, {
-                method: 'DELETE',
-            });
+            const res = await auth.cancelRegister(user_id, queueType, queueCategory)
 
-            const errorText = await res.text(); // 응답 본문 내용 확인
-            console.log("응답 상태코드:", res.status);
-            console.log("에러 본문 내용:", errorText);
-
-            if (res.ok) {
+            if (res) {
                 alert("예매 취소 완료");
             } else {
-                throw new Error("대기열 삭제 실패");
+                throw new Error("참가열 삭제 실패");
             }
 
         } catch (err) {
@@ -123,19 +130,16 @@ const ScreeningSchedule = () => {
     // 쿠키 유효성 파악
     useEffect(() => {
         const verifyToken = async () => {
-
             const user_id = localStorage.getItem('user_id')
-            console.log("userId : " + user_id)
 
             const token = Cookies.get(`reserve_user-access-cookie_${user_id}`)
-            console.log(token)
 
             if (!token || !user_id) {
                 alert("인증되지 않은 사용자입니다.");
                 navigate('/')
                 return
             }
- 
+
             try {
                 const res = await fetch(
                     `http://localhost:8079/queue/isValidateToken?userId=${user_id}&queueType=${reserveQueueType}&token=${token}`
@@ -166,7 +170,7 @@ const ScreeningSchedule = () => {
 
 
     useEffect(() => {
-        fetchScreenList();
+        getScreenList();
     }, [venueId, performanceId]);
 
     return (
@@ -182,7 +186,7 @@ const ScreeningSchedule = () => {
                                     <p className="target-timer">
                                         남은 시간: {minutes}분 {seconds < 10 ? `0${seconds}` : seconds}초
                                     </p>
-                                    <button 
+                                    <button
                                         className="back-button"
                                         onClick={() => handleCancelReserve("allow")}
                                     >

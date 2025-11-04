@@ -12,14 +12,34 @@ const Reward = () => {
     const { userInfo } = useContext(LoginContext);
     const [reward, setReward] = useState();
 
+    const today = formatDate(new Date())
+    const days = getDaysInMonth(new Date().getFullYear(), new Date().getMonth());
+
     const formatDate = (date) => {
         const yyyy = date.getFullYear();
         const mm = String(date.getMonth() + 1).padStart(2, "0");
         const dd = String(date.getDate()).padStart(2, "0");
+
         return `${yyyy}-${mm}-${dd}`;
     };
 
-    const setRewardDate = async () => {
+
+    // 이번 년도 이번 달의 모든 날짜 리스트 반환 - new Date(2025, 5, 1), new Date(2025, 5, 2) ...
+    const getDaysInMonth = (year, month) => {
+        const date = new Date(year, month, 1); // 특정 달의 1일을 기준으로 한 날짜 객체를 생성
+        const days = [];
+
+        while (date.getMonth() === month) {
+            days.push(new Date(date));
+            date.setDate(date.getDate() + 1);
+        }
+        return days;
+    };
+
+    /**
+     * 리워드 지급 요청
+     */
+    const grantReward = async () => {
 
         if (userInfo.username == null) {
             alert("로그인 후 이용 가능합니다.")
@@ -27,7 +47,6 @@ const Reward = () => {
         }
 
         const check = window.confirm("오늘 리워드를 지급 받으시겠습니까 ?")
-
         if (!check) return;
 
         const idempotencyKey = uuidv4(); // 멱등키 생성
@@ -35,8 +54,6 @@ const Reward = () => {
         const headers = {
             'Idempotency-key': idempotencyKey,
         };
-
-        console.log(idempotencyKey)
 
         try {
             const response = await auth.payRewardToday(today, headers)
@@ -65,22 +82,6 @@ const Reward = () => {
         }
     }
 
-    // 이번 년도 이번 달의 모든 날짜 리스트 반환 - new Date(2025, 5, 1), new Date(2025, 5, 2) ...
-    const getDaysInMonth = (year, month) => {
-        const date = new Date(year, month, 1); // 특정 달의 1일을 기준으로 한 날짜 객체를 생성
-        const days = [];
-
-        while (date.getMonth() === month) {
-            days.push(new Date(date));
-            date.setDate(date.getDate() + 1);
-        }
-        return days;
-    };
-
-    const today = formatDate(new Date())
-    console.log(today)
-
-    const days = getDaysInMonth(new Date().getFullYear(), new Date().getMonth());
 
     useEffect(() => {
         setReward(userInfo?.reward);
@@ -95,7 +96,7 @@ const Reward = () => {
                     보유 리워드: <strong>{reward}</strong> 포인트
                 </p>
                 <p style={{ marginBottom: "40px" }}>하루 한 번 리워드를 받아보세요!</p>
-                <button onClick={setRewardDate} className="reward-button">
+                <button onClick={grantReward} className="reward-button">
                     리워드 받기
                 </button>
             </div>
