@@ -18,6 +18,9 @@ const Seat = () => {
     const totalRows = 5;
     const totalCols = 5;
 
+    /**
+     * 좌석 선택 함수
+     */
     const toggleSeat = (seatId) => {
         if (!userInfo?.username) {
             alert("로그인 후 예매를 진행할 수 있습니다.");
@@ -37,6 +40,9 @@ const Seat = () => {
         }
     };
 
+    /**
+     * 좌석 목록 조회
+     */
     const getSeatList = async () => {
         try {
             const response = await auth.seatList(screenInfoId);
@@ -58,6 +64,9 @@ const Seat = () => {
         }
     };
 
+    /**
+     * 결제 페이지 이동
+     */
     const goToPayment = () => {
         if (selectedSeats.length === 0) {
             alert("좌석을 선택해주세요!");
@@ -135,7 +144,7 @@ const Seat = () => {
                                 </button>
                             </>
                         ) : (
-                            <p className="login-warning">로그인 후 예매해보세요.</p>
+                            <p className="login-warning">로그인 후 예매하세요.</p>
                         )}
                     </>
                 )}

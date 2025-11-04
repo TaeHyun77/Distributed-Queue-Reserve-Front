@@ -16,6 +16,9 @@ const ReserveInfo = () => {
         return datetimeString.split(".")[0].replace("T", " ");
     }
 
+    /**
+     * 예약 취소 요청
+     */
     const cancelReservation = async (reservationNumber) => {
 
         const check = window.confirm("예약을 취소하시겠습니까 ?")
@@ -26,7 +29,6 @@ const ReserveInfo = () => {
         const headers = {
             'Idempotency-key': idempotencyKey,
         };
-        console.log(idempotencyKey)
 
         try {
             const response = await auth.cancelReservation(reservationNumber, headers)

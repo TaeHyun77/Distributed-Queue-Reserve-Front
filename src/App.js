@@ -8,7 +8,7 @@ import LoginContextProvider from "./contexts/LoginContextProvider"
 import Login from "./login/LoginForm"
 import Join from "./join/JoinForm"
 
-import About from "./About"
+import About from "./about/About"
 import Venue from "./venue/Venue";
 import Seat from "./seat/Seat"
 import Payment from "./payment/Payment"

@@ -25,7 +25,9 @@ const Venue = () => {
 
     const [performanceList, setPerformanceList] = useState([]);
 
-
+    /**
+     * 공연 목록 조회
+     */
     const getPerformanceList = async () => {
         try {
             const response = await api.get(`/api/performance/list/${venueId}`);
@@ -38,6 +40,9 @@ const Venue = () => {
         }
     };
 
+    /**
+     * 대기열 등록
+     */
     const registerUser = async (performanceTitle, performanceId) => {
 
         console.log(performanceTitle)
@@ -60,11 +65,8 @@ const Venue = () => {
             const headers = {
                 "idempotencyKey": idempotencyKey,
             };
-            console.log(idempotencyKey)
 
             const res = await auth.register(queueType, encodedUserId, headers)
-
-            console.log("status:", res.status + " performanceId : " + performanceId + " queueType : " + queueType);
 
             alert(`${userInfo?.username}님, 대기열 등록 완료!`);
             setPerformanceId(performanceId)
@@ -94,19 +96,16 @@ const Venue = () => {
         getPerformanceList();
     }, [venueId]);
 
+    /**
+     * SSE 연결 및 데이터 전송
+     */
     useEffect(() => {
 
-        console.log("isWaiting : " + isWaiting + " confirm : " + confirmed + " userId : " + userId)
-
         if (!isWaiting || confirmed || !userId) return;
-
-        console.log("SSE 연결 시도:", userId);
-        console.log("userId: " + userId)
 
         const sse = new EventSource(`http://localhost:8079/queue/stream?userId=${userId}&queueType=${reserveQueueType}`);
 
         sse.onopen = () => console.log("SSE 연결 성공!");
-
         sse.onerror = (err) => {
             console.error('SSE 연결 오류:', err);
             sse.close();
@@ -125,12 +124,9 @@ const Venue = () => {
                 // 'update' : 대기열 순위 변동일 떄
                 if (data.event === 'update') {
                     setRanking(data.rank);
-                    console.log("대기 순위 변동 : " + data.rank)
 
-                    // 'confirmed' : 참가열로 이동했을 때
+                // 'confirmed' : 참가열로 이동했을 때
                 } else if (data.event === 'confirmed') {
-                    console.log("참가열 이동 사용자 : " + data.user_id)
-
                     localStorage.removeItem("is_waiting");
 
                     // 쿠키 생성 후 타겟 페이지 이동
@@ -142,7 +138,6 @@ const Venue = () => {
                             if (!response.ok) throw new Error("쿠키 발급 실패");
 
                             setConfirmed(true);
-                            console.log("타겟 페이지 이동")
                             navigate(`/screening_schedule/${venueId}/${performanceId}`, {
                                 state: {
                                     reserveQueueType,
@@ -164,13 +159,16 @@ const Venue = () => {
 
     }, [isWaiting, userId]);
 
-    const handleCancelReserve = (queueCategory) => {
+    /**
+     * 대기열 취소
+     */
+    const handleCancelQueueing = (queueCategory) => {
         const user_id = localStorage.getItem('user_id')
 
         const confirm = window.confirm("예매를 취소하시겠습니까 ?")
         if (!confirm) return;
 
-        removeAllowUser(user_id, queueCategory)
+        cancelQueueing(user_id, queueCategory)
         localStorage.removeItem('user_id')
         localStorage.removeItem('expireTime')
         Cookies.remove(`${performanceId}_user-access-cookie_${user_id}`)
@@ -178,9 +176,10 @@ const Venue = () => {
         navigate('/')
     }
 
-    const removeAllowUser = async (remove_user_id, queueCategory) => {
-
-        console.log("asdad:" + reserveQueueType)
+    /**
+     * 대기열 취소
+     */
+    const cancelQueueing = async (remove_user_id, queueCategory) => {
 
         try {
             const res = await fetch(`http://localhost:8079/queue/cancel?userId=${remove_user_id}&queueType=${reserveQueueType}&queueCategory=${queueCategory}`, {
@@ -238,7 +237,7 @@ const Venue = () => {
                 {!confirmed && (
                     <button
                         className="cancel-button"
-                        onClick={() => handleCancelReserve("wait")}
+                        onClick={() => handleCancelQueueing("wait")}
                     >
                         취소하기
                     </button>
