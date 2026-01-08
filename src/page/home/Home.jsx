@@ -1,8 +1,8 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import * as auth from "../api/auth";
-import Header from "../header/Header";
-import { LoginContext } from "../contexts/LoginContextProvider";
+import * as auth from "../../api/auth";
+import Header from "../../page/header/Header";
+import { LoginContext } from "../../contexts/LoginContextProvider";
 import "./Home.css";
 
 const Home = () => {
@@ -49,7 +49,7 @@ const Home = () => {
                     <div
                       key={venue.id}
                       className="place-card"
-                      onClick={() => navigate(`/venue/${venue.id}`)}
+                      onClick={() => navigate(`/performance/${venue.id}`)}
                     >
                       <h2>{venue.name}</h2>
                       <p>{venue.location}</p>
@@ -75,7 +75,7 @@ const Home = () => {
                       <div
                         key={venue.id}
                         className="place-card"
-                        onClick={() => navigate(`/venue/${venue.id}`)}
+                        onClick={() => navigate(`/performance/${venue.id}`)}
                       >
                         <h2>{venue.name}</h2>
                         <p>{venue.location}</p>

@@ -1,8 +1,8 @@
 import React, { useState, useRef } from "react";
-import * as auth from "../api/auth";
+import * as auth from "../../api/auth";
 import { useNavigate } from "react-router-dom";
 import "./JoinForm.css";
-import Header from "../header/Header";
+import Header from "../../page/header/Header";
 
 const JoinForm = () => {
 
@@ -30,6 +30,9 @@ const JoinForm = () => {
     join(user);
   };
 
+  /**
+   * 회원가입 요청
+   */
   const join = async (form) => {
 
     if (!usernameChecked) {
@@ -40,7 +43,7 @@ const JoinForm = () => {
     try {
       const response = await auth.join(form);
       const data = response.data;
-  
+
       if (response.status === 200) {
         alert(`회원가입 성공 !`);
         navigate("/login");
@@ -80,6 +83,9 @@ const JoinForm = () => {
     }
   };
 
+  /**
+   * 사용자 이름 유효성 검사
+   */
   const checkUsername = async (username) => {
     try {
       const response = await auth.checkUsername(username);

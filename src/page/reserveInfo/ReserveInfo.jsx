@@ -1,8 +1,8 @@
 import { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import * as auth from "../api/auth";
+import * as auth from "../../api/auth";
 import { v4 as uuidv4 } from 'uuid';
-import { LoginContext } from "../contexts/LoginContextProvider";
+import { LoginContext } from "../../contexts/LoginContextProvider";
 import Header from "../header/Header";
 import "./ReserveInfo.css";
 
@@ -16,9 +16,7 @@ const ReserveInfo = () => {
         return datetimeString.split(".")[0].replace("T", " ");
     }
 
-    /**
-     * 예약 취소 요청
-     */
+    // 예약 취소 요청
     const cancelReservation = async (reservationNumber) => {
 
         const check = window.confirm("예약을 취소하시겠습니까 ?")
@@ -27,13 +25,13 @@ const ReserveInfo = () => {
         const idempotencyKey = uuidv4();
 
         const headers = {
-            'Idempotency-key': idempotencyKey,
+            'idempotency-key': idempotencyKey,
         };
 
         try {
             const response = await auth.cancelReservation(reservationNumber, headers)
 
-            if (response.status === 200) {
+            if (response) {
                 alert("예약 취소 성공 !");
 
                 setReserveList(prev =>
@@ -100,16 +98,14 @@ const ReserveInfo = () => {
                                     <hr />
 
                                     <div className="reserve-grid">
-                                        <p><strong>관람 일시 :</strong> {formatToSeconds(reserve.startTime)} - {formatToSeconds(reserve.endTime)}</p>
-                                        <p><strong>총 금액 :</strong> {reserve.totalPrice.toLocaleString()}원</p>
+                                        <p><strong>예약 일자 :</strong> {formatToSeconds(reserve.createdAt)}</p>
+                                        <p><strong>총 금액 :</strong> {reserve.totalAmount.toLocaleString()}원</p>
 
-                                        <p><strong>관람 좌석 :</strong> {reserve.seats.join(", ")}</p>
-                                        <p className="reward-discount">리워드 할인 : {reserve.rewardDiscount.toLocaleString()}P</p>
+                                        <p><strong>예약 좌석 :</strong> {reserve.reservedSeat.join(", ")}</p>
+                                        <p className="reward-discount">리워드 할인 : {reserve.rewardDiscountAmount.toLocaleString()}P</p>
 
-                                        <p><strong>관람 인원 :</strong> {reserve.seats.length}명</p>
-                                        <p className="final-price"><strong>결제 금액 :</strong> {reserve.finalPrice.toLocaleString()}원</p>
-
-                                        <p className="created-at"><strong>예약 일자 :</strong> {formatToSeconds(reserve.createdAt)}</p>
+                                        <p><strong>예약 인원 :</strong> {reserve.reservedSeat.length}명</p>
+                                        <p className="final-price"><strong>결제 금액 :</strong> {reserve.finalAmount.toLocaleString()}원</p>
                                         <p></p>
                                     </div>
                                 </li>

@@ -1,8 +1,8 @@
 import React, { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { LoginContext } from "../contexts/LoginContextProvider";
+import { LoginContext } from "../../contexts/LoginContextProvider";
 import { v4 as uuidv4 } from 'uuid';
-import * as auth from "../api/auth";
+import * as auth from "../../api/auth";
 import Header from "../header/Header"
 import "./Reward.css";
 
@@ -12,17 +12,12 @@ const Reward = () => {
     const { userInfo } = useContext(LoginContext);
     const [reward, setReward] = useState();
 
-    const today = formatDate(new Date())
-    const days = getDaysInMonth(new Date().getFullYear(), new Date().getMonth());
-
     const formatDate = (date) => {
         const yyyy = date.getFullYear();
         const mm = String(date.getMonth() + 1).padStart(2, "0");
         const dd = String(date.getDate()).padStart(2, "0");
-
         return `${yyyy}-${mm}-${dd}`;
     };
-
 
     // 이번 년도 이번 달의 모든 날짜 리스트 반환 - new Date(2025, 5, 1), new Date(2025, 5, 2) ...
     const getDaysInMonth = (year, month) => {
@@ -36,9 +31,10 @@ const Reward = () => {
         return days;
     };
 
-    /**
-     * 리워드 지급 요청
-     */
+    const today = formatDate(new Date());
+    const days = getDaysInMonth(new Date().getFullYear(), new Date().getMonth());
+
+    // 리워드 지급 요청
     const grantReward = async () => {
 
         if (userInfo.username == null) {
@@ -52,11 +48,11 @@ const Reward = () => {
         const idempotencyKey = uuidv4(); // 멱등키 생성
 
         const headers = {
-            'Idempotency-key': idempotencyKey,
+            'idempotency-key': idempotencyKey,
         };
 
         try {
-            const response = await auth.payRewardToday(today, headers)
+            const response = await auth.payRewardToday(headers)
 
             if (response.status === 200) {
                 alert("200 포인트 지급 성공 !");

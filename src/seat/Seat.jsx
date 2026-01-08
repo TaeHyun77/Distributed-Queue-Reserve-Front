@@ -1,34 +1,33 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { LoginContext } from "../contexts/LoginContextProvider";
-import Header from "../header/Header";
+import Header from "../page/header/Header";
 import * as auth from "../api/auth";
 import "./Seat.css";
 
 const Seat = () => {
     const navigate = useNavigate();
     const { userInfo } = useContext(LoginContext);
-    const { screenInfoId } = useParams();
+    const { queueType, performanceScheduleId } = useParams();
 
+    const [seatList, setSeatList] = useState([]);
     const [selectedSeats, setSelectedSeats] = useState([]);
-    const [reservedSeats, setReservedSeats] = useState([]);
     const [personCount, setPersonCount] = useState(1);
-    const [seatPrice, setSeatPrice] = useState();
+    const [seatAmount, setSeatAmount] = useState();
 
     const totalRows = 5;
     const totalCols = 5;
+    const hasNoSeats = !seatList || seatList.length != 0;
 
-    /**
-     * 좌석 선택 함수
-     */
+    // 좌석 선택 함수
     const toggleSeat = (seatId) => {
         if (!userInfo?.username) {
             alert("로그인 후 예매를 진행할 수 있습니다.");
             return;
         }
-    
+
         const isSelected = selectedSeats.includes(seatId);
-    
+
         if (isSelected) {
             setSelectedSeats((prev) => prev.filter((s) => s !== seatId));
         } else {
@@ -40,23 +39,21 @@ const Seat = () => {
         }
     };
 
-    /**
-     * 좌석 목록 조회
-     */
+    // 좌석 목록 조회
     const getSeatList = async () => {
         try {
-            const response = await auth.seatList(screenInfoId);
+            const response = await auth.seatList(performanceScheduleId);
             const data = response.data;
 
             const reserved = data
                 .filter((seat) => seat.is_reserved)
                 .map((seat) => seat.seatNumber);
 
-            setReservedSeats(reserved);
+            setSeatList(reserved);
 
             if (data.length > 0) {
-                const price = data[0]?.screenInfo?.performance?.price;
-                setSeatPrice(price);
+                const price = data[0]?.performanceSchedule?.performance?.price;
+                setSeatAmount(price);
             }
 
         } catch (error) {
@@ -64,9 +61,7 @@ const Seat = () => {
         }
     };
 
-    /**
-     * 결제 페이지 이동
-     */
+    // 결제 페이지 이동
     const goToPayment = () => {
         if (selectedSeats.length === 0) {
             alert("좌석을 선택해주세요!");
@@ -74,19 +69,17 @@ const Seat = () => {
         }
 
         const seatsInfo = {
-            screenInfoId: screenInfoId,
+            queueType: queueType,
+            performanceScheduleId: performanceScheduleId,
             seats: selectedSeats,
             personCount: personCount,
-            seatPrice: seatPrice
+            seatAmount: seatAmount
         };
 
         navigate("/payment", { state: seatsInfo });
     };
 
-    useEffect(() => {
-        getSeatList();
-    }, []);
-
+    // 선택 인원 조절 함수
     const increasePerson = () => {
         setPersonCount((prev) => Math.min(prev + 1, 5));
     };
@@ -96,29 +89,32 @@ const Seat = () => {
         setSelectedSeats((prev) => prev.slice(0, personCount - 1));
     };
 
+    useEffect(() => {
+        getSeatList();
+    }, []);
+
     return (
         <>
             <Header />
             <div className="seat-container">
-                {seatPrice === undefined ? (
+                {hasNoSeats ? (
                     <p className="no-seat-message">좌석 정보가 없습니다.</p>
                 ) : (
                     <>
                         <h2>좌석을 선택하세요 🍿</h2>
+
                         <div className="seat-grid">
                             {[...Array(totalRows)].map((_, row) =>
                                 [...Array(totalCols)].map((_, col) => {
                                     const seatId = `${String.fromCharCode(65 + row)}${col + 1}`;
-                                    const isReserved = reservedSeats.includes(seatId);
+                                    const isReserved = seatList.includes(seatId);
                                     const isSelected = selectedSeats.includes(seatId);
 
                                     return (
                                         <div
                                             key={seatId}
                                             className={`seat ${isSelected ? "selected" : ""} ${isReserved ? "reserved" : ""}`}
-                                            onClick={() => {
-                                                if (!isReserved) toggleSeat(seatId);
-                                            }}
+                                            onClick={() => !isReserved && toggleSeat(seatId)}
                                         >
                                             {seatId}
                                         </div>
@@ -126,11 +122,7 @@ const Seat = () => {
                                 })
                             )}
                         </div>
-                    </>
-                )}
 
-                {seatPrice !== undefined && (
-                    <>
                         {userInfo?.username ? (
                             <>
                                 <div className="person-counter">
@@ -149,6 +141,7 @@ const Seat = () => {
                     </>
                 )}
             </div>
+
         </>
     );
 };
