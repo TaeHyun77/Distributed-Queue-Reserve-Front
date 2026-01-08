@@ -1,6 +1,6 @@
 import React, { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { LoginContext } from "../contexts/LoginContextProvider";
+import { LoginContext } from "../../contexts/LoginContextProvider";
 import "./Header.css";
 
 const Header = () => {

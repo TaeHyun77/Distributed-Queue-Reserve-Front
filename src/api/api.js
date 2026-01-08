@@ -2,7 +2,7 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8079', 
+  baseURL: 'http://localhost:8080', 
 });
 
 // 요청 인터셉터: 요청 시 accessToken을 자동으로 추가

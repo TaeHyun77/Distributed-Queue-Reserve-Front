@@ -1,6 +1,6 @@
 import React, { useContext, useEffect } from "react";
-import { LoginContext } from "../contexts/LoginContextProvider";
-import Header from "../header/Header"
+import { LoginContext } from "../../contexts/LoginContextProvider";
+import Header from "../../page/header/Header"
 import "./LoginForm.css";
 
 const LoginForm = () => {

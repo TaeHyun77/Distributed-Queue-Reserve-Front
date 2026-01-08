@@ -3,8 +3,8 @@ import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import api from "../api/api";
 import * as auth from "../api/auth";
 import Cookies from 'js-cookie';
-import Header from "../header/Header";
-import "./screening_schedule.css";
+import Header from "../page/header/Header";
+import "./performance_schedule.css";
 
 const ScreeningSchedule = () => {
     const navigate = useNavigate()
@@ -12,30 +12,24 @@ const ScreeningSchedule = () => {
 
     const { venueId, performanceId } = useParams();
     const { reserveQueueType } = location.state || {};
-    const [groupedScreens, setGroupedScreens] = useState({});
+
+    const [performanceScheduleList, setPerformanceScheduleList] = useState({});
 
     const [secondsLeft, setSecondsLeft] = useState(600)
 
     const minutes = Math.floor(secondsLeft / 60)
     const seconds = secondsLeft % 60
 
-    const getCookie = (name) => {
-        const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'))
-        return match ? match[2] : null
-    }
-
-    /**
-     * 공연 정보 리스트
-     */
-    const getScreenList = async () => {
+    // 공연 정보 리스트
+    const getPerformanceScheduleList = async () => {
         try {
-            const response = await api.get(`/api/screenInfo/list/${venueId}/${performanceId}`);
-            console.log("조회된 상영 정보:", response.data);
+            const response = await auth.performanceScheduleList(venueId, performanceId)
 
             const grouped = {};
 
             response.data.forEach((screen) => {
                 const title = screen.performance.title;
+
                 if (!grouped[title]) {
                     grouped[title] = [];
                 }
@@ -47,48 +41,88 @@ const ScreeningSchedule = () => {
                 grouped[title].sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
             }
 
-            setGroupedScreens(grouped);
+            setPerformanceScheduleList(grouped);
         } catch (error) {
             console.error("상영 정보 조회 실패:", error);
         }
     };
 
-    /**
-     * 허용열 등록 취소 요청
-     */
-    const handleCancelReserve = (queueCategory) => {
+    const handleAutoCancelReserve = () => {
         const user_id = localStorage.getItem('user_id')
-
-        const confirm = window.confirm("예매를 취소하시겠습니까 ?")
-        if (!confirm) return;
-
         const queueType = reserveQueueType.split(":")[0]
-        console.log("asdadasd :" + queueCategory)
 
-        removeAllowUser(user_id, queueType, queueCategory)
+        removeAllowUser(user_id, queueType, "allow")
         localStorage.removeItem('user_id')
         localStorage.removeItem('expireTime')
-        Cookies.remove(`${performanceId}_user-access-cookie_${user_id}`)
-        alert("예매 취소가 완료되었습니다.");
+        Cookies.remove(`reserve-user-access-cookie-${user_id}`)
         navigate('/')
     }
 
-    /**
-     * 허용열 등록 취소 요청
-     */
+    // 허용열에서의 취소
+    const handleCancelReserve = () => {
+        const confirm = window.confirm("예매를 취소하시겠습니까 ?")
+        if (!confirm) return;
+
+        const user_id = localStorage.getItem('user_id')
+        const queueType = reserveQueueType.split(":")[0]
+
+        removeAllowUser(user_id, queueType, "allow")
+        localStorage.removeItem('user_id')
+        localStorage.removeItem('expireTime')
+        Cookies.remove(`reserve-user-access-cookie-${user_id}`)
+        navigate('/')
+    }
+
     const removeAllowUser = async (user_id, queueType, queueCategory) => {
-
         try {
-            const res = await auth.cancelRegister(user_id, queueType, queueCategory)
-
-            if (res) {
-                alert("예매 취소 완료");
-            } else {
-                throw new Error("참가열 삭제 실패");
+            const body = {
+                userId: user_id,
+                queueType: queueType
             }
 
+            const response = await auth.cancelQueue(queueCategory, body)
+            const data = response.data
+
+            if (data) {
+                alert("예매 취소가 완료되었습니다.");
+            } else {
+                alert("예매 취소 실패, 다시 시도해주세요");
+            }
         } catch (err) {
             alert(err.message);
+        }
+    }
+
+    const verifyToken = async () => {
+        const user_id = localStorage.getItem('user_id')
+
+        const token = Cookies.get(`reserve-user-access-cookie-${user_id}`)
+
+        if (!token || !user_id) {
+            alert("인증되지 않은 사용자입니다.");
+            handleCancelReserve()
+            navigate('/')
+            return
+        }
+
+        const body = {
+            userId: user_id,
+            queueType: reserveQueueType
+        }
+
+        try {
+            const response = await auth.tokenValidation(body, token)
+
+            if (!response.data) {
+                alert("잘못된 인증입니다.")
+                handleCancelReserve()
+                navigate('/')
+                return
+            }
+
+        } catch (error) {
+            console.error('토큰 검증 중 에러 발생 : ', error)
+            navigate('/')
         }
     }
 
@@ -114,10 +148,10 @@ const ScreeningSchedule = () => {
             const diff = Math.floor((expireTime - now) / 1000)
 
             if (diff <= 0) {
-                handleCancelReserve("allow")
+                handleAutoCancelReserve()
                 clearInterval(interval)
                 localStorage.removeItem('expireTime')
-                Cookies.remove(`reserve_user-access-cookie_${user_id}`)
+                Cookies.remove(`reserve-user-access-cookie-${user_id}`)
                 navigate('/')
             } else {
                 setSecondsLeft(diff)
@@ -129,66 +163,29 @@ const ScreeningSchedule = () => {
 
     // 쿠키 유효성 파악
     useEffect(() => {
-        const verifyToken = async () => {
-            const user_id = localStorage.getItem('user_id')
-
-            const token = Cookies.get(`reserve_user-access-cookie_${user_id}`)
-
-            if (!token || !user_id) {
-                alert("인증되지 않은 사용자입니다.");
-                navigate('/')
-                return
-            }
-
-            try {
-                const res = await fetch(
-                    `http://localhost:8079/queue/isValidateToken?userId=${user_id}&queueType=${reserveQueueType}&token=${token}`
-                )
-
-                if (!res.ok) {
-                    console.error('검증 실패 : ', res.status)
-                    navigate('/')
-                    return
-                }
-
-                const isValid = await res.json()
-
-                if (!isValid) {
-                    navigate('/')
-                } else {
-                    console.log("인증된 사용자입니다.")
-                }
-
-            } catch (error) {
-                console.error('토큰 검증 중 에러 발생 : ', error)
-                navigate('/')
-            }
-        }
-
         verifyToken()
     }, [navigate])
 
-
     useEffect(() => {
-        getScreenList();
+        getPerformanceScheduleList();
     }, [venueId, performanceId]);
 
     return (
         <>
             <Header />
             <div className="screening-schedule-container">
-                {Object.keys(groupedScreens).length > 0 ? (
-                    Object.entries(groupedScreens).map(([title, screens]) => (
+                {Object.keys(performanceScheduleList).length > 0 ? (
+                    Object.entries(performanceScheduleList).map(([title, screens]) => (
                         <div key={title} className="performance-group">
                             <div className="header-row">
-                                <h2 className="performance-title">예약 페이지 - {title}</h2>
+                                <h2 className="performance-title">{title}</h2>
                                 <div className="right-controls">
                                     <p className="target-timer">
                                         남은 시간: {minutes}분 {seconds < 10 ? `0${seconds}` : seconds}초
                                     </p>
                                     <button
                                         className="back-button"
-                                        onClick={() => handleCancelReserve("allow")}
+                                        onClick={() => handleCancelReserve()}
                                     >
                                         예매 취소
                                     </button>
@@ -196,7 +193,7 @@ const ScreeningSchedule = () => {
                             </div>
                             <div className="screen-list-container">
                                 {screens.map((screen) => (
-                                    <Link to={`/Seat/${screen.id}`} key={screen.id} className="screen-card-link">
+                                    <Link to={`/seat/${reserveQueueType}/${screen.id}`} key={screen.id} className="screen-card-link">
                                         <div className="screen-card">
                                             <p>날짜: {screen.screeningDate}</p>
                                             <p>

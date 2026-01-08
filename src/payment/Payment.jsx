@@ -2,12 +2,12 @@ import { useContext, useEffect, useState } from "react"
 import { useLocation, useNavigate } from "react-router-dom";
 import { LoginContext } from "../contexts/LoginContextProvider";
 import { v4 as uuidv4 } from 'uuid';
+import Cookies from 'js-cookie';
 import * as auth from "../api/auth";
-import Header from "../header/Header"
+import Header from "../page/header/Header"
 import "./Payment.css"
 
 const Payment = () => {
-
     const location = useLocation();
     const seatsInfo = location.state;
 
@@ -16,33 +16,37 @@ const Payment = () => {
 
     const [useReward, setUseReward] = useState(false);
 
-    const price = seatsInfo.seatPrice * seatsInfo.personCount; // 총 가격
+    const price = seatsInfo.seatAmount * seatsInfo.personCount; // 총 가격
     const discount = useReward ? Math.min(userInfo?.reward, price) : 0;  // 할인 가격
 
-    /**
-     * 결제 요청
-     */
+    // 결제 요청
     const handlePayment = async () => {
-
         const check = window.confirm("결제 하시겠습니까 ?")
         if (!check) return;
 
-        const idempotencyKey = uuidv4(); // 멱등키 생성
+        // 멱등키 생성
+        const idempotencyKey = uuidv4();
         const headers = {
-            'Idempotency-key': idempotencyKey,
+            'idempotency-key': idempotencyKey,
         };
 
+        // 결제 정보
         const paymentInfo = {
-            screenInfoId: seatsInfo.screenInfoId,
-            seats: seatsInfo.seats,
-            rewardDiscount: discount
+            reservedBy: userInfo?.username,
+            performanceScheduleId: seatsInfo.performanceScheduleId,
+            reservedSeat: seatsInfo.seats,
+            rewardDiscountAmount: discount
         }
 
         try {
             const response = await auth.payAndReserve(paymentInfo, headers);
 
+            const replayed = response.headers?.["idempotent-replayed"] === "true";
+            if (replayed) return;
+
             if (response.status === 200) {
-                alert("결제 성공 ! 좌석이 예약되었습니다.");
+                handleCancelReserve()
+                alert("[ 예약 완료 ] 결제가 성공적으로 완료되었습니다.");
                 navigate("/");
             }
 
@@ -65,13 +69,40 @@ const Payment = () => {
                         alert("선택한 좌석 정보를 찾을 수 없습니다.");
                         break;
                     default:
-                        alert("예약 실패, 다시 시도해주세요. " + (errorMessage || "알 수 없는 오류"));
+                        alert("예약 실패, 다시 시도해주세요 - " + (errorMessage || "알 수 없는 오류"));
                 }
             } else {
-                alert("예약 중 오류가 발생했습니다. 서버 응답이 없습니다.");
+                alert("예약 중 오류가 발생했습니다. 다시 시도해주세요.");
             }
         }
     };
+
+    // 허용열에서의 취소
+    const handleCancelReserve = () => {
+        const user_id = localStorage.getItem('user_id')
+        const queueType = seatsInfo.queueType.split(":")[0]
+
+        console.log(user_id, queueType)
+
+        removeAllowUser(user_id, queueType, "allow")
+        localStorage.removeItem('user_id')
+        localStorage.removeItem('expireTime')
+        Cookies.remove(`reserve-user-access-cookie-${user_id}`)
+        navigate('/')
+    }
+
+    const removeAllowUser = async (user_id, queueType, queueCategory) => {
+        try {
+            const body = {
+                userId: user_id,
+                queueType: queueType
+            }
+
+            const response = await auth.cancelQueue(queueCategory, body)
+        } catch (err) {
+            alert(err.message);
+        }
+    }
 
     return (
         <>
