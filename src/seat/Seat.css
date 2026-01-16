@@ -37,7 +37,7 @@
     background-color: red;
     color: #fff;
     cursor: not-allowed;
-    pointer-events: none; /* 마우스 이벤트 차단을 위함 */
+    pointer-events: none;
 }
 
 .reserve-button {

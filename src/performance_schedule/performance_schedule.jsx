@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
-import api from "../api/api";
 import * as auth from "../api/auth";
 import Cookies from 'js-cookie';
 import Header from "../page/header/Header";
