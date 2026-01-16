@@ -7,24 +7,24 @@ import Header from "../../page/header/Header";
 const JoinForm = () => {
 
   const navigate = useNavigate()
+  const [username, setUsername] = useState("");
   const [usernameChecked, setUsernameChecked] = useState(false);
-  const usernameRef = useRef();
 
   const onJoin = (e) => {
     e.preventDefault();
 
+    if (!usernameChecked) {
+      alert("아이디 검증을 진행해주세요");
+      return;
+    }
+
     const form = e.target;
 
-    const username = form.username.value.trim();
-    const password = form.password.value.trim();
-    const name = form.name.value.trim();
-    const email = form.email.value.trim();
-
     const user = {
-      username: username,
-      password: password,
-      name: name,
-      email: email,
+      username : username, // 검증 + 정제된 값
+      password: form.password.value.trim(),
+      name: form.name.value.trim(),
+      email: form.email.value.trim(),
     };
 
     join(user);
@@ -35,14 +35,8 @@ const JoinForm = () => {
    */
   const join = async (form) => {
 
-    if (!usernameChecked) {
-      alert("아이디 검증을 진행해주세요")
-      return;
-    }
-
     try {
       const response = await auth.join(form);
-      const data = response.data;
 
       if (response.status === 200) {
         alert(`회원가입 성공 !`);
@@ -86,17 +80,14 @@ const JoinForm = () => {
   /**
    * 사용자 이름 유효성 검사
    */
-  const checkUsername = async (username) => {
+  const checkUsername = async () => {
     try {
       const response = await auth.checkUsername(username);
-      const isAvailable = response.data.available;
+      const cleanedUsername = response.data
 
-      console.log(response.data.available)
-
-      if (isAvailable) {
-        alert("사용 가능한 아이디입니다.");
-        setUsernameChecked(true);
-      }
+      alert("사용 가능한 아이디입니다.");
+      setUsername(cleanedUsername);
+      setUsernameChecked(true);
 
     } catch (error) {
       console.error("아이디 확인 중 오류 발생:", error);
@@ -145,9 +136,13 @@ const JoinForm = () => {
               <input
                 type="text"
                 id="username"
-                ref={usernameRef}
-                placeholder="username"
                 name="username"
+                placeholder="username"
+                value={username}
+                onChange={(e) => {
+                  setUsername(e.target.value);
+                  setUsernameChecked(false); // 값 바뀌면 검증 무효
+                }}
                 required
                 style={{ flex: 1 }}
               />
@@ -155,7 +150,7 @@ const JoinForm = () => {
               <button
                 type="button"
                 className="btn-check"
-                onClick={() => checkUsername(usernameRef.current.value.trim())}
+                onClick={() => checkUsername(username)}
               >
                 확인
               </button>
