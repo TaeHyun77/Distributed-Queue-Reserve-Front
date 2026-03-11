@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
-import * as auth from "../api/auth";
 import Cookies from 'js-cookie';
+import React, { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import * as auth from "../api/auth";
 import Header from "../page/header/Header";
 import "./performance_schedule.css";
 
@@ -65,21 +65,21 @@ const ScreeningSchedule = () => {
         const user_id = localStorage.getItem('user_id')
         const queueType = reserveQueueType.split(":")[0]
 
-        removeAllowUser(user_id, queueType, "allow")
+        removeAllowUser(user_id, queueType)
         localStorage.removeItem('user_id')
         localStorage.removeItem('expireTime')
         Cookies.remove(`reserve-user-access-cookie-${user_id}`)
         navigate('/')
     }
 
-    const removeAllowUser = async (user_id, queueType, queueCategory) => {
+    const removeAllowUser = async (user_id, queueType) => {
         try {
             const body = {
                 userId: user_id,
                 queueType: queueType
             }
 
-            const response = await auth.cancelQueue(queueCategory, body)
+            const response = await auth.cancelQueue(body)
             const data = response.data
 
             if (data) {
@@ -94,7 +94,6 @@ const ScreeningSchedule = () => {
 
     const verifyToken = async () => {
         const user_id = localStorage.getItem('user_id')
-
         const token = Cookies.get(`reserve-user-access-cookie-${user_id}`)
 
         if (!token || !user_id) {
@@ -106,11 +105,12 @@ const ScreeningSchedule = () => {
 
         const body = {
             userId: user_id,
-            queueType: reserveQueueType
+            queueType: reserveQueueType.split(":")[0]
         }
 
         try {
             const response = await auth.tokenValidation(body, token)
+            console.log("target page athentic : " + response.data)
 
             if (!response.data) {
                 alert("잘못된 인증입니다.")

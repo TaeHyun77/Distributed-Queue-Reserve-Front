@@ -1,7 +1,7 @@
-import { useEffect, useState, useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import * as auth from "../../api/auth";
 import { v4 as uuidv4 } from 'uuid';
+import * as auth from "../../api/auth";
 import { LoginContext } from "../../contexts/LoginContextProvider";
 import Header from "../header/Header";
 import "./ReserveInfo.css";
@@ -16,55 +16,38 @@ const ReserveInfo = () => {
         return datetimeString.split(".")[0].replace("T", " ");
     }
 
-    // 예약 취소 요청
     const cancelReservation = async (reservationNumber) => {
+        const check = window.confirm("예약을 취소하시겠습니까?");
+        if (!check) return;
 
-        const check = window.confirm("예약을 취소하시겠습니까 ?")
-        if (!check) return
-
-        const idempotencyKey = uuidv4();
-
-        const headers = {
-            'idempotency-key': idempotencyKey,
-        };
+        const headers = { 'request-key': uuidv4() };
 
         try {
-            const response = await auth.cancelReservation(reservationNumber, headers)
-
+            const response = await auth.cancelReservation(reservationNumber, headers);
             if (response) {
-                alert("예약 취소 성공 !");
-
+                alert("예약 취소 성공!");
                 setReserveList(prev =>
                     prev.filter(reserve => reserve.reservationNumber !== reservationNumber)
                 );
-
                 navigate("/");
             }
         } catch (error) {
-            const errorMessage = error?.response?.data
-
-            if (errorMessage) {
-                switch (errorMessage) {
-                    case "NOT_EXIST_RESERVE_INFO":
-                        alert("예약 정보가 없습니다.");
-                        break
-                    case "NOT_EXIST_MEMBER_INFO":
-                        alert("사용자 정보가 없습니다.");
-                        break
-                    case "NOT_EXIST_SEAT_INFO":
-                        alert("좌석 정보가 없습니다.");
-                        break
-                    default:
-                        alert("예약 취소 실패, 다시 시도해주세요. " + (errorMessage || "알 수 없는 오류"));
-                }
-            } else {
-                alert("예약 취소 중 오류가 발생했습니다. 서버 응답이 없습니다.");
+            const errorMessage = error?.response?.data;
+            switch (errorMessage) {
+                case "NOT_EXIST_RESERVE_INFO":
+                    alert("예약 정보가 없습니다."); break;
+                case "NOT_EXIST_MEMBER_INFO":
+                    alert("사용자 정보가 없습니다."); break;
+                case "NOT_EXIST_SEAT_INFO":
+                    alert("좌석 정보가 없습니다."); break;
+                default:
+                    alert("예약 취소 실패, 다시 시도해주세요.");
             }
         }
-    }
+    };
 
     useEffect(() => {
-        setReserveList(userInfo?.reserveList)
+        setReserveList(userInfo?.reserveList);
     }, [userInfo]);
 
     return (
@@ -72,8 +55,12 @@ const ReserveInfo = () => {
             <Header />
             <div className="reserve-container">
                 <h2 className="reserve-title">나의 예약 내역</h2>
+
                 {reserveList?.length === 0 ? (
-                    <p className="no-reserve">예약 내역이 없습니다.</p>
+                    <div className="reserve-empty">
+                        <div className="reserve-empty-icon">🎫</div>
+                        <p className="reserve-empty-text">예약 내역이 없습니다</p>
+                    </div>
                 ) : (
                     <ul className="reserve-list">
                         {reserveList
@@ -83,30 +70,49 @@ const ReserveInfo = () => {
                             )
                             .map((reserve, index) => (
                                 <li key={index} className="reserve-item">
-                                    <div className="reserve-header">
-                                        <p className="reservation-number">
-                                            <strong>예약 번호 :</strong> {reserve.reservationNumber}
-                                        </p>
+                                    <div className="reserve-item-header">
+                                        <div className="reserve-number-wrap">
+                                            <span className="reserve-number-label">예약 번호</span>
+                                            <span className="reserve-number-value">{reserve.reservationNumber}</span>
+                                        </div>
                                         <button
-                                            className="cancel-button"
+                                            className="reserve-cancel-button"
                                             onClick={() => cancelReservation(reserve.reservationNumber)}
                                         >
                                             예약 취소
                                         </button>
                                     </div>
 
-                                    <hr />
+                                    <div className="reserve-divider" />
 
                                     <div className="reserve-grid">
-                                        <p><strong>예약 일자 :</strong> {formatToSeconds(reserve.createdAt)}</p>
-                                        <p><strong>총 금액 :</strong> {reserve.totalAmount.toLocaleString()}원</p>
+                                        <div className="reserve-row">
+                                            <span className="reserve-label">예약 일자</span>
+                                            <span className="reserve-value">{formatToSeconds(reserve.createdAt)}</span>
+                                        </div>
+                                        <div className="reserve-row">
+                                            <span className="reserve-label">예약 좌석</span>
+                                            <span className="reserve-value">{reserve.reservedSeat.join(", ")}</span>
+                                        </div>
+                                        <div className="reserve-row">
+                                            <span className="reserve-label">예약 인원</span>
+                                            <span className="reserve-value">{reserve.reservedSeat.length}명</span>
+                                        </div>
+                                        <div className="reserve-row">
+                                            <span className="reserve-label">총 금액</span>
+                                            <span className="reserve-value">{reserve.totalAmount.toLocaleString()}원</span>
+                                        </div>
+                                        <div className="reserve-row">
+                                            <span className="reserve-label">리워드 할인</span>
+                                            <span className="reserve-value reserve-discount">- {reserve.rewardDiscountAmount.toLocaleString()} P</span>
+                                        </div>
+                                    </div>
 
-                                        <p><strong>예약 좌석 :</strong> {reserve.reservedSeat.join(", ")}</p>
-                                        <p className="reward-discount">리워드 할인 : {reserve.rewardDiscountAmount.toLocaleString()}P</p>
+                                    <div className="reserve-divider" />
 
-                                        <p><strong>예약 인원 :</strong> {reserve.reservedSeat.length}명</p>
-                                        <p className="final-price"><strong>결제 금액 :</strong> {reserve.finalAmount.toLocaleString()}원</p>
-                                        <p></p>
+                                    <div className="reserve-final">
+                                        <span className="reserve-final-label">최종 결제 금액</span>
+                                        <span className="reserve-final-value">{reserve.finalAmount.toLocaleString()}원</span>
                                     </div>
                                 </li>
                             ))}

@@ -1,87 +1,113 @@
 .home-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 24px;
+    min-height: calc(100vh - 120px);
+    display: flex;
+    flex-direction: column;
+}
+
+/* 공연장 있을 때: 비로그인 상단 히어로 */
+.home-hero {
+    text-align: center;
+    padding: 40px 20px 32px;
+}
+
+.home-title {
+    font-size: 2.4rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 10px;
+    letter-spacing: -0.5px;
+}
+
+.home-subtitle {
+    font-size: 1.05rem;
+    color: #888;
+    margin: 0;
+}
+
+.home-section-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #444;
+    margin-bottom: 20px;
+}
+
+/* 공연장 없을 때: 중앙 정렬 empty state */
+.home-empty {
+    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: calc(80vh - 60px);
+    gap: 10px;
     text-align: center;
-    padding: 20px;
 }
 
-.home-title {
-    font-size: 2.5em;
-    margin-bottom: 20px;
-    color: #333;
+.home-empty-icon {
+    font-size: 3.5rem;
+    opacity: 0.35;
+    margin-bottom: 8px;
 }
 
-.home-message {
-    font-size: 1.2em;
-    color: #666;
-    margin-bottom: 10px;
+.home-empty-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #555;
+    margin: 0;
 }
 
-.home-button {
-    padding: 10px 20px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 1em;
-    transition: background-color 0.3s ease;
-
-    &:hover {
-        background-color: #0056b3;
-    }
+.home-empty-sub {
+    font-size: 0.95rem;
+    color: #aaa;
+    margin: 0;
 }
 
+/* 카드 그리드 */
 .place-card-container {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
     gap: 20px;
-    justify-content: center;
-    margin-top: 30px;
 }
 
 .place-card {
-    background-color: #f9f9f9;
-    border: 1px solid #ddd;
-    border-radius: 15px;
-    padding: 20px;
-    width: 250px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s;
-    text-align: center;
+    background-color: #fff;
+    border: 1.5px solid #efefef;
+    border-radius: 14px;
+    padding: 24px 20px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .place-card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 28px rgba(58, 159, 151, 0.18);
+    border-color: var(--main-color);
 }
 
-.place-link {
-    display: inline-block;
-    margin-top: 10px;
-    color: #007bff;
-    text-decoration: none;
-    font-weight: bold;
+.place-card-icon {
+    width: 44px;
+    height: 44px;
+    background-color: rgba(58, 159, 151, 0.1);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    margin-bottom: 14px;
 }
 
-.place-link:hover {
-    text-decoration: underline;
+.place-card h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin: 0 0 6px;
 }
 
-.home-button {
-    padding: 10px 20px;
-    background-color: #3a9f97;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 1em;
-    transition: background-color 0.3s ease;
-    margin-top: 15px;
-}
-
-.home-button:hover {
-    background-color: #0056b3;
+.place-card p {
+    font-size: 0.875rem;
+    color: #999;
+    margin: 0;
 }

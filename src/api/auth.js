@@ -50,21 +50,21 @@ export const cancelReservation = (reserveNumber, headers = {}) => {
 // 대기열 등록
 export const register = (body, headers = {}) => {
     return api.post(
-        `http://localhost:8081/queue/register`, body, { headers }
+        `http://localhost:8079/queue/register`, body, { headers }
     );
 }
 
 // 허용열에서 등록 취소
-export const cancelQueue = (queueCategory, body) => {
-    return api.post(`http://localhost:8081/queue/cancel/${queueCategory}`, body);
+export const cancelQueue = (body) => {
+    return api.post(`http://localhost:8079/queue/cancel`, body);
 };
 
 export const tokenValidation = (body, token) => api.post(
-    `http://localhost:8081/queue/isValidateToken/${token}`, body
+    `http://localhost:8079/queue/isValidateToken/${token}`, body
 )
 
 export const createQueueCookie = (queueType, userId) =>
-    api.get("http://localhost:8081/queue/create/cookie", {
+    api.get("http://localhost:8079/queue/create/cookie", {
         params: { queueType, userId },
         withCredentials: true,
     });
