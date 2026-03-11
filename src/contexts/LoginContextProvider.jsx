@@ -1,8 +1,8 @@
+import Cookies from "js-cookie";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/api";
 import * as auth from "../api/auth";
-import Cookies from "js-cookie";
 
 export const LoginContext = React.createContext();
 LoginContext.displayName = "LoginContextName";
@@ -57,19 +57,15 @@ const LoginContextProvider = ({ children }) => {
    * 로그인 요청
    */
   const login = async (username, password) => {
-
     try {
       const response = await auth.login(username, password);
-      const status = response.status;
-      const headers = response.headers;
-      const authorization = headers.authorization;
 
-      if (status === 200) {
-        Cookies.set("accessToken", authorization);
+      if (response.status === 200) {
+        const accessToken = response.headers['access'];  // authorization → access
+        Cookies.set("accessToken", accessToken, { secure: true, sameSite: 'Strict' });
 
         loginCheck();
         alert(`로그인 성공`);
-
         navigate("/");
       }
     } catch (error) {
@@ -77,17 +73,16 @@ const LoginContextProvider = ({ children }) => {
     }
   };
 
-  
   /**
    * 로그인 세팅
    */
   const loginSetting = (userData, accessToken) => {
-    const { username, role, name, email, last_reward_date, reward, credit, reserveList, createdAt, seats, startTime, endTime } = userData;
+    const { username, role, name, email, lastRewardDate, reward, credit, reserveList, createdAt, seats, startTime, endTime } = userData;
 
     api.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
     setIsLogin(true);
 
-    const updatedUserInfo = { username, role, name, email, last_reward_date, reward, credit, reserveList, createdAt, seats, startTime, endTime };
+    const updatedUserInfo = { username, role, name, email, lastRewardDate, reward, credit, reserveList, createdAt, seats, startTime, endTime };
     setUserInfo(updatedUserInfo);
 
     const updatedRoles = { isUser: false, isAdmin: false };

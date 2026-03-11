@@ -1,62 +1,64 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
+const PUBLIC_URLS = [
+  '/login',
+  '/api/member/create',
+  '/api/member/check/validation',
+  '/api/reToken'
+];
+
+const isPublicUrl = (url) => PUBLIC_URLS.some(u => url?.includes(u));
+
 const api = axios.create({
-  baseURL: 'http://localhost:8080', 
+  baseURL: 'http://localhost:8080',
 });
 
-// 요청 인터셉터: 요청 시 accessToken을 자동으로 추가
-api.interceptors.request.use(
+const reTokenApi = axios.create({
+  baseURL: 'http://localhost:8080',
+});
 
+// 요청 인터셉터 - 공개 API는 토큰 붙이지 않음
+api.interceptors.request.use(
   (config) => {
     const accessToken = Cookies.get('accessToken');
-
-    if (accessToken) {
+    if (accessToken && !isPublicUrl(config.url)) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
-
     return config;
   },
-
   (error) => Promise.reject(error)
 );
 
-// 응답 인터셉터: accessToken 만료 시 refresh token으로 새 토큰 요청
-api.interceptors.response.use((response) => response,
-
+// 응답 인터셉터 - 공개 API는 reToken 시도 안 함
+api.interceptors.response.use(
+  (response) => response,
   async (error) => {
-
-    // 실패한 요청 정보
     const originalRequest = error.config;
 
-    if (error.response.status === 401 && !originalRequest._retry) {
-      console.log('Access token이 만료되었습니다. 재발급 시도 중...');
-
-      originalRequest._retry = true; // 재시도를 했다는 의미
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !isPublicUrl(originalRequest.url)
+    ) {
+      originalRequest._retry = true;
 
       try {
-
-        const response = await api.post('/api/reToken', {}, { withCredentials: true });
-
-        console.log(response)
-
+        const response = await reTokenApi.post('/api/reToken', {}, { withCredentials: true });
         const newAccessToken = response.headers.access;
 
         Cookies.set('accessToken', newAccessToken, { secure: true, sameSite: 'Strict' });
-
-        console.log('Access token이 성공적으로 재발급되었습니다.');
-
         api.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
 
         return api(originalRequest);
-
       } catch (err) {
-        console.error('Refresh token이 만료되었거나 오류가 발생했습니다. 로그아웃 처리 필요.');
-
+        console.error('Refresh token 만료 또는 오류');
+        Cookies.remove('accessToken');
         return Promise.reject(err);
       }
     }
+
     return Promise.reject(error);
   }
 );

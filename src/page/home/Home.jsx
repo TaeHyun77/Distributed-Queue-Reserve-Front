@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import * as auth from "../../api/auth";
 import Header from "../../page/header/Header";
 import { LoginContext } from "../../contexts/LoginContextProvider";
@@ -7,85 +7,66 @@ import "./Home.css";
 
 const Home = () => {
   const navigate = useNavigate();
-
   const { isLogin } = useContext(LoginContext);
-  const [venueList, setVenueList] = useState([])
+  const [venueList, setVenueList] = useState([]);
 
   const getVenueList = async () => {
-
     try {
       const response = await auth.venueList();
-      const data = response.data
-      console.log(data)
-
+      const data = response.data;
       if (data != null) {
-        setVenueList(data)
-      } else {
-        console.log("장소 리스트 없음")
+        setVenueList(data);
       }
     } catch (error) {
       console.log(`장소 리스트 조회 에러 : ${error}`);
     }
-  }
+  };
 
   useEffect(() => {
-    getVenueList()
-  }, [])
+    getVenueList();
+  }, []);
 
   return (
     <>
       <Header />
       <div className="home-container">
-        {isLogin ? (
-          <div className="home-content">
+        {!isLogin && venueList.length > 0 && (
+          <div className="home-hero">
+            <h1 className="home-title">공연 예매 서비스</h1>
+            <p className="home-subtitle">원하는 공연장을 선택해보세요</p>
+          </div>
+        )}
 
-            {venueList.length === 0 ? (
-              <p className="home-message">공연장 정보가 없습니다.</p>
-            ) : (
-              <>
-                <p className="home-message">공연장을 선택해보세요!</p>
-                <div className="place-card-container">
-                  {venueList.map((venue) => (
-                    <div
-                      key={venue.id}
-                      className="place-card"
-                      onClick={() => navigate(`/performance/${venue.id}`)}
-                    >
-                      <h2>{venue.name}</h2>
-                      <p>{venue.location}</p>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
+        {venueList.length === 0 ? (
+          <div className="home-empty">
+            <div className="home-empty-icon">🏟️</div>
+            <p className="home-empty-title">
+              {isLogin ? "등록된 공연장이 없습니다" : "공연 예매 서비스"}
+            </p>
+            <p className="home-empty-sub">
+              {isLogin ? "잠시 후 다시 시도해주세요" : "로그인하여 공연을 예매해보세요"}
+            </p>
           </div>
         ) : (
-          <>
-            <h1 className="home-title">환영합니다 👋</h1>
-            <p className="home-message">로그인하여 공연을 예매해보세요</p>
-
-            <div className="home-content">
-
-              {venueList.length === 0 ? (
-                <p className="home-message">공연장 정보가 없습니다.</p>
-              ) : (
-                <>
-                  <div className="place-card-container">
-                    {venueList.map((venue) => (
-                      <div
-                        key={venue.id}
-                        className="place-card"
-                        onClick={() => navigate(`/performance/${venue.id}`)}
-                      >
-                        <h2>{venue.name}</h2>
-                        <p>{venue.location}</p>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
+          <div>
+            <h2 className="home-section-title">공연장 목록</h2>
+            <div className="place-card-container">
+              {venueList.map((venue) => (
+                <div
+                  key={venue.id}
+                  className="place-card"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => navigate(`/performance/${venue.id}`)}
+                  onKeyDown={(e) => e.key === "Enter" && navigate(`/performance/${venue.id}`)}
+                >
+                  <div className="place-card-icon">🏟️</div>
+                  <h2>{venue.name}</h2>
+                  <p>{venue.location}</p>
+                </div>
+              ))}
             </div>
-          </>
+          </div>
         )}
       </div>
     </>

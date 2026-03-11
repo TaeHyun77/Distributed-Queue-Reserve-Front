@@ -1,11 +1,11 @@
-import { useContext, useEffect, useState } from "react"
-import { useLocation, useNavigate } from "react-router-dom";
-import { LoginContext } from "../contexts/LoginContextProvider";
-import { v4 as uuidv4 } from 'uuid';
 import Cookies from 'js-cookie';
+import { useContext, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { v4 as uuidv4 } from 'uuid';
 import * as auth from "../api/auth";
-import Header from "../page/header/Header"
-import "./Payment.css"
+import { LoginContext } from "../contexts/LoginContextProvider";
+import Header from "../page/header/Header";
+import "./Payment.css";
 
 const Payment = () => {
     const location = useLocation();
@@ -32,7 +32,6 @@ const Payment = () => {
 
         // 결제 정보
         const paymentInfo = {
-            reservedBy: userInfo?.username,
             performanceScheduleId: seatsInfo.performanceScheduleId,
             reservedSeat: seatsInfo.seats,
             rewardDiscountAmount: discount
@@ -44,11 +43,10 @@ const Payment = () => {
             const replayed = response.headers?.["idempotent-replayed"] === "true";
             if (replayed) return;
 
-            if (response.status === 200) {
-                handleCancelReserve()
-                alert("[ 예약 완료 ] 결제가 성공적으로 완료되었습니다.");
-                navigate("/");
-            }
+            handleCancelReserve();
+            alert("[ 예약 완료 ] 결제가 성공적으로 완료되었습니다.");
+            navigate("/");
+
 
         } catch (error) {
 
@@ -84,21 +82,21 @@ const Payment = () => {
 
         console.log(user_id, queueType)
 
-        removeAllowUser(user_id, queueType, "allow")
+        removeAllowUser(user_id, queueType)
         localStorage.removeItem('user_id')
         localStorage.removeItem('expireTime')
         Cookies.remove(`reserve-user-access-cookie-${user_id}`)
         navigate('/')
     }
 
-    const removeAllowUser = async (user_id, queueType, queueCategory) => {
+    const removeAllowUser = async (user_id, queueType) => {
         try {
             const body = {
                 userId: user_id,
                 queueType: queueType
             }
 
-            const response = await auth.cancelQueue(queueCategory, body)
+            const response = await auth.cancelQueue(body)
         } catch (err) {
             alert(err.message);
         }

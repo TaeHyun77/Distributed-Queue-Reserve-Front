@@ -1,58 +1,93 @@
-.calendar-container {
-  max-width: 800px;
-  margin: 10rem auto;
-  padding: 1.5rem;
-  background: #f9fafb;
-  border-radius: 1rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  text-align: center;
+.reward-container {
+    max-width: 400px;
+    margin: 60px auto;
+    padding: 48px 36px 40px;
+    background: #fff;
+    border: 1.5px solid #efefef;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
 }
 
-.calendar-title {
-  font-size: 1.5rem;
-  font-weight: bold;
+.reward-icon {
+    font-size: 3rem;
+    margin-bottom: 12px;
+    line-height: 1;
 }
 
-.calendar-grid {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 1.5rem;
+.reward-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0 0 4px;
 }
 
-.calendar-day {
-  padding: 1rem;
-  background: #e5e7eb;
-  margin-bottom: 20px;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  color: #374151;
+.reward-desc {
+    font-size: 0.9rem;
+    color: #aaa;
+    margin: 0 0 8px;
 }
 
-.calendar-day.rewarded {
-  background: #34d399;
-  color: white;
+.reward-balance {
+    width: 100%;
+    margin-top: 16px;
+    padding: 20px 16px;
+    background: linear-gradient(135deg, rgba(58, 159, 151, 0.08), rgba(58, 159, 151, 0.04));
+    border: 1.5px solid rgba(58, 159, 151, 0.2);
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.reward-balance-label {
+    font-size: 0.82rem;
+    color: #888;
+    font-weight: 500;
+}
+
+.reward-balance-value {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--main-color);
+    line-height: 1;
 }
 
 .reward-button {
-  background: #3a9f97;
-  color: white;
-  padding: 1rem 1.5rem;
-  font-size: 1rem;
-  border: none;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: background 0.2s ease;
+    width: 100%;
+    margin-top: 24px;
+    padding: 13px 0;
+    background-color: var(--main-color);
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.18s ease;
 }
 
-.reward-button:hover {
-  background: #2563eb;
+.reward-button:hover:not(:disabled) {
+    background-color: var(--hover-color);
 }
 
-.reward-point {
-  font-size: 1.1rem;
-  font-weight: 500;
-  margin-bottom: 2rem;
-  color: #10b981;
-  /* 예쁜 초록색 */
+.reward-button--claimed {
+    background-color: #f0f0f0;
+    color: #666;
+    cursor: default;
+}
+
+.reward-button--claimed:hover {
+    background-color: #f0f0f0;
+}
+
+.reward-notice {
+    font-size: 0.78rem;
+    color: #ccc;
+    margin: 4px 0 0;
 }
