@@ -1,20 +1,20 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import './App.css';
 
-import Home from "./page/home/Home"
+import Home from "./page/home/Home";
 
-import LoginContextProvider from "./contexts/LoginContextProvider"
+import LoginContextProvider from "./contexts/LoginContextProvider";
 
-import Login from "./account/login/LoginForm"
-import Join from "./account/join/JoinForm"
+import Join from "./account/join/JoinForm";
+import Login from "./account/login/LoginForm";
 
-import About from "./page/about/About"
+import About from "./page/about/About";
+import ReserveInfo from "./page/reserveInfo/ReserveInfo";
+import Reward from "./page/reward/Reward";
+import Payment from "./payment/Payment";
 import Performance from "./performance/Performance";
-import Seat from "./seat/Seat"
-import Payment from "./payment/Payment"
-import Reward from "./page/reward/Reward"
-import PerformanceSchedule from "./performance_schedule/performance_schedule"
-import ReserveInfo from "./page/reserveInfo/ReserveInfo"
+import PerformanceSchedule from "./performance_schedule/performance_schedule";
+import Seat from "./seat/Seat";
 
 
 const App = () => {

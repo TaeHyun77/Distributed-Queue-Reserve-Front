@@ -37,19 +37,19 @@ const Reward = () => {
 
         try {
             const response = await auth.payRewardToday(headers);
+
             if (response.status === 200) {
                 alert("200 포인트 지급 성공!");
                 setReward(prev => prev + 200);
                 setClaimedToday(true);
             }
-        } catch (error) {
-            const errorMessage = error?.response?.data;
-            if (errorMessage === "REWARD_ALREADY_CLAIMED") {
-                alert("오늘 이미 리워드가 지급되었습니다.");
-            } else {
+        } catch (e) {
+            if (e.response.status === 409) {
+              alert('오늘 이미 리워드를 받았습니다.')
+            } else{
                 alert("리워드 지급 실패, 다시 시도해주세요.");
             }
-        }
+          }
     };
 
     useEffect(() => {

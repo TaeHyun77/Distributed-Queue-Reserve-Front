@@ -30,13 +30,6 @@ const Home = () => {
     <>
       <Header />
       <div className="home-container">
-        {!isLogin && venueList.length > 0 && (
-          <div className="home-hero">
-            <h1 className="home-title">공연 예매 서비스</h1>
-            <p className="home-subtitle">원하는 공연장을 선택해보세요</p>
-          </div>
-        )}
-
         {venueList.length === 0 ? (
           <div className="home-empty">
             <div className="home-empty-icon">🏟️</div>
@@ -50,20 +43,18 @@ const Home = () => {
         ) : (
           <div>
             <h2 className="home-section-title">공연장 목록</h2>
+            <p className="home-venue-hint">원하는 공연장을 선택하여 예매해보세요 !</p>
             <div className="place-card-container">
               {venueList.map((venue) => (
-                <div
+                <button
                   key={venue.id}
                   className="place-card"
-                  role="button"
-                  tabIndex={0}
                   onClick={() => navigate(`/performance/${venue.id}`)}
-                  onKeyDown={(e) => e.key === "Enter" && navigate(`/performance/${venue.id}`)}
                 >
                   <div className="place-card-icon">🏟️</div>
                   <h2>{venue.name}</h2>
                   <p>{venue.location}</p>
-                </div>
+                </button>
               ))}
             </div>
           </div>

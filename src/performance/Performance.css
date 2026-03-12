@@ -84,6 +84,28 @@
     background-color: var(--hover-color);
 }
 
+.performance-countdown {
+    margin-top: 16px;
+    padding: 12px 14px;
+    background-color: rgba(58, 159, 151, 0.06);
+    border: 1.5px solid rgba(58, 159, 151, 0.2);
+    border-radius: 10px;
+    text-align: center;
+}
+
+.performance-countdown-date {
+    font-size: 0.82rem;
+    color: #888;
+    margin: 0 0 4px;
+}
+
+.performance-countdown-timer {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--main-color);
+    margin: 0;
+}
+
 /* empty state */
 .performance-empty {
     flex: 1;

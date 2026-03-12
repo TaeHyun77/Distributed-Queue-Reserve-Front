@@ -26,8 +26,7 @@ const About = () => {
       <Header />
       <div className="about-container">
         <div className="about-hero">
-          <h1 className="about-title">통합 예약 프로젝트</h1>
-          <p className="about-subtitle">멱등성과 동시성을 직접 구현하며 배우는 실전 예약 시스템</p>
+          <p className="about-subtitle">멱등성과 동시성을 직접 구현하는 실전 예약 시스템</p>
         </div>
 
         <div className="about-card-grid">

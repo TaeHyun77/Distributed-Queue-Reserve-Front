@@ -5,7 +5,16 @@ import * as auth from "../api/auth";
 import Header from "../page/header/Header";
 import "./performance_schedule.css";
 
-const ScreeningSchedule = () => {
+const formatDuration = (minutes) => {
+    if (!minutes) return '-';
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    if (h === 0) return `${m}분`;
+    if (m === 0) return `${h}시간`;
+    return `${h}시간 ${m}분`;
+};
+
+const PerformanceSchedule = () => {
     const navigate = useNavigate()
     const location = useLocation();
 
@@ -19,7 +28,6 @@ const ScreeningSchedule = () => {
     const minutes = Math.floor(secondsLeft / 60)
     const seconds = secondsLeft % 60
 
-    // 공연 정보 리스트
     const getPerformanceScheduleList = async () => {
         try {
             const response = await auth.performanceScheduleList(venueId, performanceId)
@@ -35,7 +43,6 @@ const ScreeningSchedule = () => {
                 grouped[title].push(screen);
             });
 
-            // 그룹 내 상영 시간 정렬
             for (const title in grouped) {
                 grouped[title].sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
             }
@@ -46,29 +53,31 @@ const ScreeningSchedule = () => {
         }
     };
 
-    const handleAutoCancelReserve = () => {
-        const user_id = localStorage.getItem('user_id')
-        const queueType = reserveQueueType.split(":")[0]
-
-        removeAllowUser(user_id, queueType, "allow")
+    const clearTimerSession = (user_id) => {
+        sessionStorage.removeItem(`timerStarted_${user_id}`)
         localStorage.removeItem('user_id')
         localStorage.removeItem('expireTime')
         Cookies.remove(`reserve-user-access-cookie-${user_id}`)
+    }
+
+    const handleAutoCancelReserve = () => {
+        const user_id = localStorage.getItem('user_id')
+        const queueType = reserveQueueType?.split(":")[0]
+
+        removeAllowUser(user_id, queueType)
+        clearTimerSession(user_id)
         navigate('/')
     }
 
-    // 허용열에서의 취소
     const handleCancelReserve = () => {
         const confirm = window.confirm("예매를 취소하시겠습니까 ?")
         if (!confirm) return;
 
         const user_id = localStorage.getItem('user_id')
-        const queueType = reserveQueueType.split(":")[0]
+        const queueType = reserveQueueType?.split(":")[0]
 
         removeAllowUser(user_id, queueType)
-        localStorage.removeItem('user_id')
-        localStorage.removeItem('expireTime')
-        Cookies.remove(`reserve-user-access-cookie-${user_id}`)
+        clearTimerSession(user_id)
         navigate('/')
     }
 
@@ -110,7 +119,6 @@ const ScreeningSchedule = () => {
 
         try {
             const response = await auth.tokenValidation(body, token)
-            console.log("target page athentic : " + response.data)
 
             if (!response.data) {
                 alert("잘못된 인증입니다.")
@@ -126,41 +134,37 @@ const ScreeningSchedule = () => {
     }
 
     useEffect(() => {
-        const expireTime = localStorage.getItem('expireTime')
         const user_id = localStorage.getItem('user_id')
+        const sessionKey = `timerStarted_${user_id}`
+        const alreadyStarted = sessionStorage.getItem(sessionKey)
 
-        if (!expireTime) {
+        if (!alreadyStarted) {
             const newExpire = Date.now() + 600_000
             localStorage.setItem('expireTime', newExpire.toString())
+            sessionStorage.setItem(sessionKey, 'true')
         }
 
-        // 렌더링 직후 실제 남은 시간 계산
-        const current = Date.now()
-        const expire = parseInt(localStorage.getItem('expireTime') || '0', 10)
-        const diff = Math.floor((expire - current) / 1000)
-
-        setSecondsLeft(diff > 0 ? diff : 0)
+        const expire = Number.parseInt(localStorage.getItem('expireTime') || '0', 10)
+        const diff = Math.floor((expire - Date.now()) / 1000)
+        setSecondsLeft(Math.max(diff, 0))
 
         const interval = setInterval(() => {
             const now = Date.now()
-            const expireTime = parseInt(localStorage.getItem('expireTime') || '0', 10)
-            const diff = Math.floor((expireTime - now) / 1000)
+            const expireTime = Number.parseInt(localStorage.getItem('expireTime') || '0', 10)
+            const remaining = Math.floor((expireTime - now) / 1000)
 
-            if (diff <= 0) {
-                handleAutoCancelReserve()
+            if (remaining <= 0) {
                 clearInterval(interval)
-                localStorage.removeItem('expireTime')
-                Cookies.remove(`reserve-user-access-cookie-${user_id}`)
-                navigate('/')
+                clearTimerSession(user_id)
+                handleAutoCancelReserve()
             } else {
-                setSecondsLeft(diff)
+                setSecondsLeft(remaining)
             }
         }, 1000)
 
         return () => clearInterval(interval)
     }, [navigate])
 
-    // 쿠키 유효성 파악
     useEffect(() => {
         verifyToken()
     }, [navigate])
@@ -174,45 +178,66 @@ const ScreeningSchedule = () => {
             <Header />
             <div className="screening-schedule-container">
                 {Object.keys(performanceScheduleList).length > 0 ? (
-                    Object.entries(performanceScheduleList).map(([title, screens]) => (
-                        <div key={title} className="performance-group">
-                            <div className="header-row">
-                                <h2 className="performance-title">{title}</h2>
-                                <div className="right-controls">
-                                    <p className="target-timer">
-                                        남은 시간: {minutes}분 {seconds < 10 ? `0${seconds}` : seconds}초
-                                    </p>
-                                    <button
-                                        className="back-button"
-                                        onClick={() => handleCancelReserve()}
-                                    >
-                                        예매 취소
-                                    </button>
+                    Object.entries(performanceScheduleList).map(([title, screens]) => {
+                        const perf = screens[0]?.performance;
+                        return (
+                            <div key={title} className="performance-group">
+
+                                <div className="schedule-header">
+                                    <div className="schedule-header-info">
+                                        <span className="schedule-type-badge">{perf?.type}</span>
+                                        <h2 className="schedule-title">{title}</h2>
+                                        <p className="schedule-meta">
+                                            상영 시간 · {formatDuration(perf?.duration)}
+                                            &nbsp;&nbsp;|&nbsp;&nbsp;
+                                            {perf?.price?.toLocaleString()}원
+                                        </p>
+                                    </div>
+
+                                    <div className="schedule-controls">
+                                        <div className="schedule-timer">
+                                            <span className="timer-label">남은 시간</span>
+                                            <span className="timer-value">
+                                                {minutes}분 {seconds < 10 ? `0${seconds}` : seconds}초
+                                            </span>
+                                        </div>
+                                        <button className="cancel-reserve-button" onClick={handleCancelReserve}>
+                                            예매 취소
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="screen-list-container">
+                                    {screens.map((screen) => {
+                                        const start = new Date(screen.startTime);
+                                        const end = new Date(screen.endTime);
+                                        return (
+                                            <Link
+                                                to={`/seat/${reserveQueueType}/${screen.id}`}
+                                                key={screen.id}
+                                                className="screen-card-link"
+                                            >
+                                                <div className="screen-card">
+                                                    <p className="screen-date">
+                                                        {start.toLocaleDateString('ko-KR', {
+                                                            month: 'long',
+                                                            day: 'numeric',
+                                                            weekday: 'short'
+                                                        })}
+                                                    </p>
+                                                    <p className="screen-time">
+                                                        {start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+                                                        {' ~ '}
+                                                        {end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+                                                    </p>
+                                                </div>
+                                            </Link>
+                                        );
+                                    })}
                                 </div>
                             </div>
-                            <div className="screen-list-container">
-                                {screens.map((screen) => (
-                                    <Link to={`/seat/${reserveQueueType}/${screen.id}`} key={screen.id} className="screen-card-link">
-                                        <div className="screen-card">
-                                            <p>날짜: {screen.screeningDate}</p>
-                                            <p>
-                                                {new Date(screen.startTime).toLocaleTimeString([], {
-                                                    hour: '2-digit',
-                                                    minute: '2-digit',
-                                                    hour12: false
-                                                })} -{' '}
-                                                {new Date(screen.endTime).toLocaleTimeString([], {
-                                                    hour: '2-digit',
-                                                    minute: '2-digit',
-                                                    hour12: false
-                                                })}
-                                            </p>
-                                        </div>
-                                    </Link>
-                                ))}
-                            </div>
-                        </div>
-                    ))
+                        );
+                    })
                 ) : (
                     <p className="loading-message">상영 정보를 불러오는 중...</p>
                 )}
@@ -221,4 +246,4 @@ const ScreeningSchedule = () => {
     );
 };
 
-export default ScreeningSchedule;
+export default PerformanceSchedule;
