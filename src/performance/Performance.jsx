@@ -1,5 +1,5 @@
 import Cookies from 'js-cookie';
-import React, { useCallback, useContext, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { v4 as uuidv4 } from 'uuid';
 import * as auth from "../api/auth";
@@ -7,11 +7,73 @@ import { LoginContext } from "../contexts/LoginContextProvider";
 import Header from "../page/header/Header";
 import "./Performance.css";
 
+const formatDate = (date) =>
+    `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+
+const formatDuration = (minutes) => {
+    if (!minutes) return '-';
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    if (h === 0) return `${m}분`;
+    if (m === 0) return `${h}시간`;
+    return `${h}시간 ${m}분`;
+};
+
+const CountdownButton = ({ scheduleList = [], onReserve }) => {
+    const earliestTime = useMemo(() => {
+        const list = scheduleList;
+        if (list.length === 0) return null;
+        return Math.min(...list.map(ps => new Date(ps.startTime).getTime()));
+    }, [scheduleList]);
+
+    const [canReserve, setCanReserve] = useState(!earliestTime || earliestTime <= Date.now());
+    const [timeLeft, setTimeLeft] = useState('');
+
+    useEffect(() => {
+        if (!earliestTime || earliestTime <= Date.now()) {
+            setCanReserve(true);
+            return;
+        }
+
+        const update = () => {
+            const diff = earliestTime - Date.now();
+            if (diff <= 0) {
+                setCanReserve(true);
+                return;
+            }
+            const d = Math.floor(diff / 86400000);
+            const h = Math.floor((diff % 86400000) / 3600000);
+            const m = Math.floor((diff % 3600000) / 60000);
+            const s = Math.floor((diff % 60000) / 1000);
+            setTimeLeft(d > 0 ? `${d}일 ${h}시간 ${m}분 ${s}초` : h > 0 ? `${h}시간 ${m}분 ${s}초` : `${m}분 ${s}초`);
+        };
+
+        update();
+        const interval = setInterval(update, 1000);
+        return () => clearInterval(interval);
+    }, [earliestTime]);
+
+    if (canReserve) {
+        return (
+            <button className="performance-reserve-button" onClick={onReserve}>
+                예매하기
+            </button>
+        );
+    }
+
+    return (
+        <div className="performance-countdown">
+            <p className="performance-countdown-date">🗓 {formatDate(new Date(earliestTime))} 오픈</p>
+            <p className="performance-countdown-timer">⏱ {timeLeft}</p>
+        </div>
+    );
+};
+
 const QUEUE_BASE_URL = "http://localhost:8079";
 const MAX_COOKIE_RETRY = 3;
 const COOKIE_RETRY_DELAY_MS = 1000;
 
-const Venue = () => {
+const Performance = () => {
     const navigate = useNavigate();
 
     const { isLogin, userInfo } = useContext(LoginContext);
@@ -29,21 +91,23 @@ const Venue = () => {
 
     const getPerformanceList = useCallback(async () => {
         try {
-            const response = await auth.performanceList(venueId);
-            setPerformanceList(response.data);
+            const response = await auth.performanceScheduleListByVenueId(venueId);
+            console.log(response.data)
+
+            const grouped = new Map();
+            response.data.forEach(item => {
+                const perfId = item.performance.id;
+                if (!grouped.has(perfId)) {
+                    grouped.set(perfId, { ...item.performance, schedules: [] });
+                }
+                grouped.get(perfId).schedules.push({ scheduleId: item.id, startTime: item.startTime });
+            });
+
+            setPerformanceList([...grouped.values()]);
         } catch (error) {
             console.error("공연 목록 조회 실패:", error);
         }
     }, [venueId]);
-
-    const getPerformanceScheduleId = async (performance_id) => {
-        try {
-            const response = await auth.performanceScheduleId(venueId, performance_id);
-            return response.data;
-        } catch (error) {
-            console.error("performanceScheduleId 조회 실패:", error);
-        }
-    };
 
     const createQueueCookieWithRetry = async (queueType, userId) => {
         for (let attempt = 1; attempt <= MAX_COOKIE_RETRY; attempt++) {
@@ -61,7 +125,7 @@ const Venue = () => {
         }
     };
 
-    const registerUser = async (performance_id) => {
+    const registerUser = async (performance_id, scheduleId) => {
         if (!isLogin) {
             alert("예매 시 로그인이 필요합니다.");
             return;
@@ -70,7 +134,6 @@ const Venue = () => {
         const confirm = window.confirm("예매 하시겠습니까?");
         if (!confirm) return;
 
-        const scheduleId = await getPerformanceScheduleId(performance_id);
         const queueType = `reserve_${scheduleId}`;
         const requestKey = uuidv4();
 
@@ -280,15 +343,13 @@ const Venue = () => {
                                 </div>
 
                                 <div className="performance-duration">
-                                    상영 시간 · {performance.duration}
+                                    상영 시간 · {formatDuration(performance.duration)}
                                 </div>
 
-                                <button
-                                    className="performance-reserve-button"
-                                    onClick={() => registerUser(performance.id)}
-                                >
-                                    예매하기
-                                </button>
+                                <CountdownButton
+                                    scheduleList={performance.schedules}
+                                    onReserve={() => registerUser(performance.id, performance.schedules[0].scheduleId)}
+                                />
                             </div>
                         ))}
                     </div>
@@ -298,4 +359,4 @@ const Venue = () => {
     );
 };
 
-export default Venue;
+export default Performance;

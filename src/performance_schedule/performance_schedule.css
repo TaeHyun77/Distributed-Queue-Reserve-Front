@@ -1,37 +1,104 @@
 .screening-schedule-container {
-    width: 80%;
-    margin: 10px auto;
-    padding: 40px 20px;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 24px;
+    min-height: calc(100vh - 120px);
 }
 
 .performance-group {
-    margin-bottom: 50px;
+    margin-bottom: 48px;
 }
 
-.performance-title {
-    font-size: 1.6em;
-    font-weight: bold;
-    color: #222;
-    margin-bottom: 50px;
-    text-align: center;
-    padding-bottom: 10px;
+/* 상단 헤더 */
+.schedule-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1.5px solid #f0f0f0;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
 }
 
+.schedule-header-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.schedule-type-badge {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--main-color);
+    background-color: rgba(58, 159, 151, 0.1);
+    padding: 3px 10px;
+    border-radius: 20px;
+    width: fit-content;
+}
+
+.schedule-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0;
+}
+
+.schedule-meta {
+    font-size: 0.875rem;
+    color: #999;
+    margin: 0;
+}
+
+/* 타이머 + 취소 버튼 */
+.schedule-controls {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-shrink: 0;
+}
+
+.schedule-timer {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+}
+
+.timer-label {
+    font-size: 0.72rem;
+    color: #aaa;
+    font-weight: 500;
+}
+
+.timer-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #c0392b;
+}
+
+.cancel-reserve-button {
+    padding: 8px 18px;
+    background-color: #fff0f0;
+    color: #c0392b;
+    border: 1.5px solid #f5c0c0;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.18s ease;
+}
+
+.cancel-reserve-button:hover {
+    background-color: #fde0e0;
+}
+
+/* 상영 카드 그리드 */
 .screen-list-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 40px;
-    justify-content: center;
-}
-
-.screen-card {
-    background-color: #fff;
-    border: 1px solid #ccc;
-    border-radius: 12px;
-    padding: 16px;
-    width: 220px;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s;
+    gap: 14px;
 }
 
 .screen-card-link {
@@ -39,67 +106,40 @@
     color: inherit;
 }
 
-.screen-card:hover {
-    transform: translateY(-4px);
+.screen-card {
+    background-color: #fff;
+    border: 1.5px solid #efefef;
+    border-radius: 12px;
+    padding: 18px 22px;
+    min-width: 160px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    text-align: center;
 }
 
-.screen-card p {
-    font-size: 0.95em;
-    color: #444;
-    margin: 6px 0;
+.screen-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(58, 159, 151, 0.15);
+    border-color: var(--main-color);
+}
+
+.screen-date {
+    font-size: 0.875rem;
+    color: #666;
+    margin: 0 0 6px;
+    font-weight: 500;
+}
+
+.screen-time {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0;
 }
 
 .loading-message {
     text-align: center;
-    font-size: 1.1em;
-    margin-top: 60px;
-    color: #777;
-}
-
-.header-row {
-    justify-content: center;
-    align-items: center;
-    gap: 30px;
-    flex-wrap: wrap;
-    margin-bottom: 30px;
-    padding-bottom: 10px;
-    text-align: center;
-}
-
-.performance-title {
-    font-size: 1.6em;
-    font-weight: bold;
-    color: #222;
-    margin: 0;
-    margin-bottom: 20px;
-}
-
-.right-controls {
-    justify-content: center;
-    align-items: center;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.target-timer {
-    font-size: 1em;
-    color: #d9534f;
-    font-weight: 500;
-    margin: 0;
-}
-
-.back-button {
-    padding: 8px 16px;
-    background-color: #f44336;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 0.95em;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.back-button:hover {
-    transform: scale(1.03);
+    font-size: 1rem;
+    margin-top: 80px;
+    color: #aaa;
 }
