@@ -1,54 +1,54 @@
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from 'uuid';
 import * as auth from "../../api/auth";
-import { LoginContext } from "../../contexts/LoginContextProvider";
 import Header from "../header/Header";
 import "./ReserveInfo.css";
 
+const ERROR_MESSAGES = {
+    "RESERVATION_NOT_FOUND": "예약을 찾을 수 없습니다.",
+    "UNAUTHORIZED": "권한이 없습니다.",
+};
+
 const ReserveInfo = () => {
     const navigate = useNavigate();
-    const { userInfo } = useContext(LoginContext);
     const [reserveList, setReserveList] = useState([]);
 
     function formatToSeconds(datetimeString) {
         if (!datetimeString) return '';
         return datetimeString.split(".")[0].replace("T", " ");
     }
-
     const cancelReservation = async (reservationNumber) => {
-        const check = window.confirm("예약을 취소하시겠습니까?");
-        if (!check) return;
-
-        const headers = { 'request-key': uuidv4() };
-
+        if (!window.confirm("예약을 취소하시겠습니까?")) return;
+    
         try {
-            const response = await auth.cancelReservation(reservationNumber, headers);
-            if (response) {
-                alert("예약 취소 성공!");
-                setReserveList(prev =>
-                    prev.filter(reserve => reserve.reservationNumber !== reservationNumber)
-                );
-                navigate("/");
-            }
+            await auth.cancelReservation(reservationNumber, {
+                'request-key': uuidv4()
+            });
+            alert("예약 취소 성공!");
+            setReserveList(prev =>
+                prev.filter(r => r.reservationNumber !== reservationNumber)
+            );
+            navigate("/");
         } catch (error) {
-            const errorMessage = error?.response?.data;
-            switch (errorMessage) {
-                case "NOT_EXIST_RESERVE_INFO":
-                    alert("예약 정보가 없습니다."); break;
-                case "NOT_EXIST_MEMBER_INFO":
-                    alert("사용자 정보가 없습니다."); break;
-                case "NOT_EXIST_SEAT_INFO":
-                    alert("좌석 정보가 없습니다."); break;
-                default:
-                    alert("예약 취소 실패, 다시 시도해주세요.");
-            }
+            const message = ERROR_MESSAGES[error?.response?.data]
+                ?? "예약 취소 실패, 다시 시도해주세요.";
+            alert(message);
         }
     };
 
     useEffect(() => {
-        setReserveList(userInfo?.reserveList);
-    }, [userInfo]);
+        const fetchReservations = async () => {
+            try {
+                const response = await auth.getMyReservations();
+                setReserveList(response.data);
+            } catch (error) {
+                console.error("예약 목록 조회 실패:", error);
+                setReserveList([]);
+            }
+        };
+        fetchReservations();
+    }, []);
 
     return (
         <>

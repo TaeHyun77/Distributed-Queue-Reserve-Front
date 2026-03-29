@@ -4,6 +4,7 @@ import './App.css';
 import Home from "./page/home/Home";
 
 import LoginContextProvider from "./contexts/LoginContextProvider";
+import ReservationFlowGuard from "./contexts/ReservationFlowGuard";
 
 import Join from "./account/join/JoinForm";
 import Login from "./account/login/LoginForm";
@@ -21,6 +22,7 @@ const App = () => {
   return (
     <BrowserRouter>
       <LoginContextProvider>
+        <ReservationFlowGuard>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
@@ -33,6 +35,7 @@ const App = () => {
           <Route path="/performance_schedule/:venueId/:performanceId" element={<PerformanceSchedule />} />
           <Route path="/reserveInfo" element={<ReserveInfo />} />
         </Routes>
+        </ReservationFlowGuard>
       </LoginContextProvider>
     </BrowserRouter>
   );

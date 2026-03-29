@@ -1,89 +1,118 @@
-.form {
-    width: 400px;
-    margin: 100px auto;
-    padding: 36px 48px;
-    background-color: white; 
-    border-radius: 11px;
-    box-shadow: 0 2.4rem 4.8rem rgba(0, 0, 0, 0.1); 
+.auth-wrapper {
+  min-height: calc(100vh - 70px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  background-color: #ffffff;
+  padding: 60px 16px;
 }
 
-.login-title {
-    padding: 15px;
-    font-size: 24px;
-    font-weight: 700; 
-    text-align: center;
-    color: #3a9f97; 
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  background-color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  padding: 44px 48px;
 }
 
-.login-form {
-    display: grid;
-    grid-template-columns: 1fr;
-    row-gap: 16px;
+.auth-header {
+  margin-bottom: 32px;
+  text-align: center;
 }
 
-.login-form label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 600; 
+.auth-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 6px;
 }
 
-.login-form input {
-    width: 100%;
-    padding: 1.2rem;
-    border-radius: 9px;
-    border: 1px solid #ccc; 
-    transition: border-color 0.3s;
+.auth-subtitle {
+  font-size: 14px;
+  color: #888;
 }
 
-.login-form input:focus {
-    outline: none;
-    border-color: #3a9f97; 
-    box-shadow: #3a9f97; 
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
 
-.btn--form {
-    background-color: #3a9f97;
-    color: white;
-    align-self: end;
-    padding: 12px; 
-    font-size: 18px; 
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
 }
 
-.btn,
-.btn:link,
-.btn:visited {
-    display: inline-block;
-    text-decoration: none;
-    font-size: 20px;
-    font-weight: 600;
-    border-radius: 9px;
-    border: none;
-    cursor: pointer;
-    font-family: inherit;
-    transition: all 0.3s;
+.form-field label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
 }
 
-.btn-login:hover {
-    outline: 1px solid #3a9f97; 
+.form-field input {
+  padding: 12px 14px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 15px;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background-color: #fafafa;
 }
 
-.btn--form:hover {
-    background-color: #3a9f97; 
-    color: white;
+.form-field input:focus {
+  outline: none;
+  border-color: #3a9f97;
+  box-shadow: 0 0 0 3px rgba(58, 159, 151, 0.12);
+  background-color: #fff;
 }
 
-/* 회원가입 링크 스타일 */
-.signup-link {
-    display: block;
-    text-align: center;
-    margin-top: 20px;
-    color: #3a9f97; 
-    font-weight: 600;
-    text-decoration: none; 
-    transition: color 0.3s ease-in-out;
+.auth-link-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 2px;
 }
 
-.signup-link:hover {
-    color: #285f58;
-    text-decoration: underline;
+.auth-link-text {
+  font-size: 14px;
+  color: #666;
+}
+
+.auth-link {
+  font-size: 14px;
+  font-weight: 600;
+  color: #3a9f97;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.auth-link:hover {
+  color: #2a7a73;
+  text-decoration: underline;
+}
+
+.auth-submit-btn {
+  width: 100%;
+  padding: 14px;
+  background-color: #3a9f97;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color 0.2s, transform 0.1s;
+  margin-top: 4px;
+}
+
+.auth-submit-btn:hover {
+  background-color: #2e8a83;
+}
+
+.auth-submit-btn:active {
+  transform: scale(0.98);
 }

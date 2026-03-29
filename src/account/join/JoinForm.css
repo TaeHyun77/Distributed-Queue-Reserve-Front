@@ -1,135 +1,58 @@
-.join_container {
-  width: 500px;
-  margin: 100px auto;
-  padding: 36px 48px;
-  background-color: white;
-  border-radius: 11px;
-  box-shadow: 0 2.4rem 4.8rem rgba(0, 0, 0, 0.1);
-}
-
-.join-title {
-  padding: 15px;
-  font-size: 24px;
-  font-weight: 700; 
-  text-align: center;
-  color: #3a9f97; 
-}
-
-.join-form {
-  display: grid;
-  grid-template-columns: 1fr;
-  row-gap: 16px;
-}
-
-.join-form label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 600;
-  font-size: 15px;
-}
-
-.join-form input {
-  width: 92%;
-  padding: 1.2rem;
-  border-radius: 9px;
-  border: 1px solid #ccc; 
-  transition: border-color 0.3s; 
-}
-
-.join-form input:focus {
-  outline: none;
-  border-color: #3a9f97; 
-  box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.2);
-}
-
-.btn--form {
-  background-color: #3a9f97;
-  color: white;
-  align-self: end;
-  padding: 12px;
-  font-size: 18px;
-}
-
-.btn-join {
-  display: inline-block;
-  font-size: 15px;
-  border-radius: 9px;
-  border: none;
-  cursor: pointer;
-  font-family: inherit;
-  transition: all 0.3s;
-  background-color: #3a9f97;
-  color: white;
-  padding: 10px;
-  text-align: center;
-}
-
-.btn-join:hover {
-  transform: scale(1.03);
-}
-
-.btn--form:hover {
-  background-color: #3a9f97;
-  color: white;
-}
-
-.file-input-label {
-  display: inline-block;
-  background-color: white;
-  color: black;
-  padding: 8px;
-  border-radius: 9px;
-  cursor: pointer;
-  transition: background-color 0.3s, color 0.3s;
-  text-align: center;
-  width: 100%;
-  box-sizing: border-box;
-  font-size: 15px;
-}
-
-.file-input-label:hover {
-  background-color: red;
+.join-card {
+  max-width: 480px;
 }
 
 .form-hint {
-  margin: 4px 0;
+  margin: 4px 0 2px;
   color: #666;
-  font-size: 13px;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
-.form-hint2 {
-  margin: 4px 0;
-  color: red;
-  font-size: 13px;
+.form-hint-warn {
+  margin: 0 0 8px;
+  color: #e05c5c;
+  font-size: 12px;
 }
 
-.username-area {
-  position: "relative";
+.input-with-btn {
+  display: flex;
+  gap: 8px;
 }
 
-.text-blue {
-  font-size: 15px;
-  color: blue
-}
-
-.text-red {
-  font-size: 15px;
-  color: red
+.input-with-btn input {
+  flex: 1;
 }
 
 .btn-check {
-  padding: 0 16px;
+  padding: 0 18px;
   font-size: 14px;
-  border-radius: 9px;
+  font-weight: 600;
+  font-family: inherit;
+  border-radius: 10px;
   border: none;
-  background-color: #3a9f97;
-  color: white;
+  background-color: #2a7a73;
+  color: #fff;
   cursor: pointer;
-  transition: all 0.2s;
   white-space: nowrap;
+  transition: background-color 0.2s;
+  flex-shrink: 0;
 }
 
 .btn-check:hover {
-  background-color: white;
-  color: black;
+  background-color: #1e6b65;
+}
+
+.status-ok {
+  font-size: 13px;
+  color: #3a9f97;
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+.status-warn {
+  font-size: 13px;
+  color: #e05c5c;
+  font-weight: 500;
+  margin-top: 4px;
 }

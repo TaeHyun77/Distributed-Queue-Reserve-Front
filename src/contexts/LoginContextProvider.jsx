@@ -11,19 +11,34 @@ const LoginContextProvider = ({ children }) => {
 
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
   const [userInfo, setUserInfo] = useState({});
   const [roles, setRoles] = useState({ isUser: false, isAdmin: false });
 
-  /**
-   * 로그인 여부
-   */
+  // 로그인 요청
+  const login = async (username, password) => {
+    const response = await auth.login(username, password);
+
+    if (response.status === 200) {
+      const accessToken = response.headers['access'];  
+      Cookies.set("accessToken", accessToken, { secure: true, sameSite: 'Strict' });
+
+      loginCheck();
+      alert(`로그인 성공`);
+      navigate("/");
+    } else {
+      alert(`로그인 실패`);
+    }
+  };
+
+  // 로그인 여부
   const loginCheck = async () => {
     const accessToken = Cookies.get("accessToken");
 
     if (!accessToken) {
       console.log(`쿠키에 accessToken 없음`);
-
       logoutSetting();
+      setAuthReady(true);
       return;
     }
 
@@ -36,8 +51,9 @@ const LoginContextProvider = ({ children }) => {
       response = await auth.info();
       data = response.data;
 
-      if (data == "UNAUTHORIZED" || response.status == 401) {
+      if (data === "UNAUTHORIZED" || response.status === 401) {
         console.error(`accessToken이 만료되거나 인증 실패되었습니다.`);
+        setAuthReady(true);
         return;
       }
 
@@ -48,30 +64,12 @@ const LoginContextProvider = ({ children }) => {
       if (error.response && error.response.status) {
         console.log(`status : ${error.response.status}`);
       }
-
-      return;
+    } finally {
+      setAuthReady(true);
     }
   };
 
-  /**
-   * 로그인 요청
-   */
-  const login = async (username, password) => {
-    try {
-      const response = await auth.login(username, password);
 
-      if (response.status === 200) {
-        const accessToken = response.headers['access'];  // authorization → access
-        Cookies.set("accessToken", accessToken, { secure: true, sameSite: 'Strict' });
-
-        loginCheck();
-        alert(`로그인 성공`);
-        navigate("/");
-      }
-    } catch (error) {
-      alert(`로그인 실패되었습니다..!`);
-    }
-  };
 
   /**
    * 로그인 세팅
@@ -135,7 +133,7 @@ const LoginContextProvider = ({ children }) => {
 
   return (
     <LoginContext.Provider
-      value={{ isLogin, userInfo, roles, login, logout, DeleteLogout }}
+      value={{ isLogin, authReady, userInfo, roles, login, logout, DeleteLogout }}
     >
       {children}
     </LoginContext.Provider>

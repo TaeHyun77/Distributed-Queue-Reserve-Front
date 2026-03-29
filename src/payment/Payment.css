@@ -1,72 +1,199 @@
-.payment-container {
-    max-width: 600px;
-    margin: 150px auto;
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    background-color: #ffffff;
-    font-family: "Noto Sans KR", sans-serif;
+.payment-page {
+    min-height: calc(100vh - 70px);
+    background-color: #f4f6f8;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 50px 16px;
 }
 
-.payment-container h2 {
-    font-size: 24px;
+.payment-card {
+    width: 100%;
+    max-width: 480px;
+    background-color: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    padding: 40px 44px;
+}
+
+.payment-card-header {
+    margin-bottom: 28px;
+}
+
+.payment-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.payment-header-top > div:first-child {
+    text-align: left;
+}
+
+.payment-timer {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+}
+
+.payment-timer .timer-label {
+    font-size: 12px;
+    color: #888;
+}
+
+.payment-timer .timer-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: #e74c3c;
+}
+
+.payment-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+}
+
+.payment-subtitle {
+    font-size: 14px;
+    color: #888;
+}
+
+.payment-section {
     margin-bottom: 20px;
-    color: #333;
-    text-align: center;
 }
 
-.payment-detail {
-    margin-bottom: 20px;
-    font-size: 18px;
-    color: #444;
-    line-height: 1.6;
+.payment-section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
 }
 
-.payment-detail p {
-    margin-bottom: 30px;
+.payment-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
-.payment_price {
+.payment-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin: 1rem 0;
+    font-size: 15px;
 }
 
-.payment_price p {
-    margin: 0;
-    font-size: 1rem;
-    font-weight: 500;
+.payment-label {
+    color: #666;
 }
 
-.payment-button {
-    width: 100%;
-    padding: 12px;
-    margin-top: 30px;
-    font-size: 18px;
-    background-color: #3a9f97;
-    color: white;
+.payment-value {
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.payment-divider {
     border: none;
+    border-top: 1px solid #f0f0f0;
+    margin: 20px 0;
+}
+
+/* 포인트 */
+.reward-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.reward-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.reward-point {
+    font-size: 15px;
+    font-weight: 700;
+    color: #3a9f97;
+}
+
+.reward-toggle-btn {
+    padding: 7px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    border: 1.5px solid #2a7a73;
+    background-color: #fff;
+    color: #2a7a73;
     border-radius: 8px;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: all 0.2s;
 }
 
-.payment-button:hover {
-    background-color: #45a049;
+.reward-toggle-btn:hover {
+    background-color: #e8f5f4;
 }
 
-.reward-toggle-button {
-    margin: 0.5rem 0 1rem 0;
-    padding: 0.6rem 1rem;
-    background-color: #3a9f97;
-    color: white;
-    border: none;
-    border-radius: 0.4rem;
-    cursor: pointer;
+.reward-toggle-btn.active {
+    background-color: #2a7a73;
+    color: #fff;
+}
+
+.reward-applied {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #3a9f97;
     font-weight: 600;
+    text-align: right;
 }
 
-.reward-toggle-button:hover {
-    background-color: #059669;
+/* 최종 금액 */
+.payment-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.payment-total-label {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.payment-total-price {
+    font-size: 22px;
+    font-weight: 700;
+    color: #3a9f97;
+}
+
+/* 결제 버튼 */
+.payment-submit-btn {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 700;
+    background-color: #2a7a73;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.payment-submit-btn:hover:not(:disabled) {
+    background-color: #1e6b65;
+}
+
+.payment-submit-btn:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.payment-submit-btn:disabled {
+    background-color: #a0c4c1;
+    cursor: not-allowed;
 }
