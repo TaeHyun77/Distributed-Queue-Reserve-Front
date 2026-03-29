@@ -35,7 +35,7 @@
 <img width="1584" height="712" alt="타이머" src="https://github.com/user-attachments/assets/318edda0-c3ea-44a9-805b-019a618fb832" /><br><br>
 
 
-[ 좌석 선택 페이지 ]
+<br>[ 좌석 선택 페이지 ]
 
 <img width="1581" height="865" alt="영수증" src="https://github.com/user-attachments/assets/21cbab70-558f-4325-8ae6-24f118fd93ee" />
 
