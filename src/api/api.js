@@ -2,20 +2,22 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 
 const PUBLIC_URLS = [
-  '/login',
-  '/api/member/create',
-  '/api/member/check/validation',
-  '/api/reToken'
+  '/reserve/login',
+  '/reserve/member/create',
+  '/reserve/member/check/validation',
+  '/reserve/reToken'
 ];
 
 const isPublicUrl = (url) => PUBLIC_URLS.some(u => url?.includes(u));
 
 const api = axios.create({
-  baseURL: 'http://localhost:8080',
+  baseURL: 'http://localhost:8079',
+  withCredentials: true,
 });
 
 const reTokenApi = axios.create({
-  baseURL: 'http://localhost:8080',
+  baseURL: 'http://localhost:8079',
+  withCredentials: true,
 });
 
 // 요청 인터셉터 - 공개 API는 토큰 붙이지 않음
@@ -44,8 +46,8 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const response = await reTokenApi.post('/api/reToken', {}, { withCredentials: true });
-        const newAccessToken = response.headers.access;
+        const response = await reTokenApi.post('/reserve/reToken', {}, { withCredentials: true });
+        const newAccessToken = response.headers['access'];  
 
         Cookies.set('accessToken', newAccessToken, { secure: true, sameSite: 'Strict' });
         api.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
@@ -53,7 +55,7 @@ api.interceptors.response.use(
 
         return api(originalRequest);
       } catch (err) {
-        console.error('Refresh token 만료 또는 오류');
+        console.error('retoken 요청 실패');
         Cookies.remove('accessToken');
         return Promise.reject(err);
       }

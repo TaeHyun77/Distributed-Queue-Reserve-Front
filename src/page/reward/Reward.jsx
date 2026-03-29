@@ -1,6 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { v4 as uuidv4 } from 'uuid';
 import * as auth from "../../api/auth";
 import { LoginContext } from "../../contexts/LoginContextProvider";
 import Header from "../header/Header";
@@ -11,6 +10,7 @@ const Reward = () => {
     const { userInfo } = useContext(LoginContext);
     const [reward, setReward] = useState();
     const [claimedToday, setClaimedToday] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     // 로컬 날짜 기준 (toISOString은 UTC라 한국 시간과 다를 수 있음)
     const today = (() => {
@@ -22,34 +22,49 @@ const Reward = () => {
     const alreadyClaimed = claimedToday || userInfo?.lastRewardDate?.startsWith(today);
 
     const grantReward = async () => {
+        if (isLoading) return;
+    
         if (userInfo.username == null) {
             alert("로그인 후 이용 가능합니다.");
             navigate("/login");
             return;
         }
-
-        console.log(userInfo)
-
+    
         const check = window.confirm("오늘 리워드를 지급 받으시겠습니까?");
         if (!check) return;
-
-        const headers = { 'idempotency-key': uuidv4() };
-
+    
+        setIsLoading(true);
+        const MAX_RETRIES = 3;
+    
         try {
-            const response = await auth.payRewardToday(headers);
-
-            if (response.status === 200) {
-                alert("200 포인트 지급 성공!");
-                setReward(prev => prev + 200);
-                setClaimedToday(true);
+            for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+                try {
+                    const response = await auth.payRewardToday();
+    
+                    alert("200 포인트 지급 성공!");
+                    setReward(response.data.reward);
+                    setClaimedToday(true);
+                    return;
+    
+                } catch (e) {
+                    if (e.response) {
+                        alert(e.response.data.message || "리워드 지급에 실패했습니다.");
+                        if (e.response.status === 409) setClaimedToday(true);
+                        return;
+                    }
+    
+                    if (attempt < MAX_RETRIES - 1) {
+                        await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+                        continue;
+                    }
+    
+                    alert("네트워크 오류가 발생했습니다. 다시 시도해주세요.");
+                    return;
+                }
             }
-        } catch (e) {
-            if (e.response.status === 409) {
-              alert('오늘 이미 리워드를 받았습니다.')
-            } else{
-                alert("리워드 지급 실패, 다시 시도해주세요.");
-            }
-          }
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     useEffect(() => {

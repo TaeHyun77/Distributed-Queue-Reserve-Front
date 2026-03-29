@@ -1,7 +1,6 @@
 import Cookies from 'js-cookie';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { v4 as uuidv4 } from 'uuid';
 import * as auth from "../api/auth";
 import { LoginContext } from "../contexts/LoginContextProvider";
 import Header from "../page/header/Header";
@@ -130,41 +129,44 @@ const Performance = () => {
             alert("예매 시 로그인이 필요합니다.");
             return;
         }
-
+    
         const confirm = window.confirm("예매 하시겠습니까?");
         if (!confirm) return;
-
+    
         const queueType = `reserve_${scheduleId}`;
-        const requestKey = uuidv4();
-
+    
         try {
-            const headers = {
-                "request-key": requestKey,
-                "Content-Type": "application/json"
-            };
             const body = {
                 queueType: queueType,
                 userId: userInfo?.username
             };
-
-            const response = await auth.register(body, headers);
+    
+            const response = await auth.register(body);
             const data = response.data;
-
-            if (data === "SUCCESS") {
-                alert(`${userInfo?.username}님, 대기열 등록 완료!`);
-                const fullQueueType = queueType + ":user-queue:wait";
-
-                setPerformanceId(performance_id);
-                setReserveQueueType(fullQueueType);
-                setIsWaiting(true);
-                setUserId(userInfo?.username);
-
-                localStorage.setItem("user_id", userInfo?.username);
-                localStorage.setItem("is_waiting", "true");
-                localStorage.setItem("reserve_queue_type", fullQueueType);
-                localStorage.setItem("performance_id", performance_id);
-            } else if (data === "ALREADY_REGISTERED") {
-                alert("이미 등록된 사용자입니다.");
+    
+            switch (data) {
+                case "REGISTERED":
+                    alert(`${userInfo?.username}님, 대기열 등록 완료!`);
+                    const fullQueueType = queueType + ":user-queue:wait";
+    
+                    setPerformanceId(performance_id);
+                    setReserveQueueType(fullQueueType);
+                    setIsWaiting(true);
+                    setUserId(userInfo?.username);
+    
+                    localStorage.setItem("user_id", userInfo?.username);
+                    localStorage.setItem("is_waiting", "true");
+                    localStorage.setItem("reserve_queue_type", fullQueueType);
+                    localStorage.setItem("performance_id", performance_id);
+                    break;
+    
+                case "ALREADY_EXISTS":
+                    alert("이미 등록된 사용자입니다.");
+                    break;
+    
+                default:
+                    alert("알 수 없는 응답입니다. 다시 시도해주세요.");
+                    break;
             }
         } catch (err) {
             const msg = err.response?.data?.message || "예약 중 에러 발생";

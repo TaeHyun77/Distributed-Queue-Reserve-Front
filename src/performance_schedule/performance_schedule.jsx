@@ -1,7 +1,9 @@
 import Cookies from 'js-cookie';
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import * as auth from "../api/auth";
+import { LoginContext } from "../contexts/LoginContextProvider";
+import { ReservationFlowContext } from "../contexts/ReservationFlowGuard";
 import Header from "../page/header/Header";
 import "./performance_schedule.css";
 
@@ -17,13 +19,17 @@ const formatDuration = (minutes) => {
 const PerformanceSchedule = () => {
     const navigate = useNavigate()
     const location = useLocation();
+    const { isLogin, authReady } = useContext(LoginContext);
+    const { secondsLeft } = useContext(ReservationFlowContext);
+
+    useEffect(() => {
+        if (authReady && !isLogin) navigate("/");
+    }, [authReady, isLogin, navigate]);
 
     const { venueId, performanceId } = useParams();
     const { reserveQueueType } = location.state || {};
 
     const [performanceScheduleList, setPerformanceScheduleList] = useState({});
-
-    const [secondsLeft, setSecondsLeft] = useState(600)
 
     const minutes = Math.floor(secondsLeft / 60)
     const seconds = secondsLeft % 60
@@ -53,22 +59,6 @@ const PerformanceSchedule = () => {
         }
     };
 
-    const clearTimerSession = (user_id) => {
-        sessionStorage.removeItem(`timerStarted_${user_id}`)
-        localStorage.removeItem('user_id')
-        localStorage.removeItem('expireTime')
-        Cookies.remove(`reserve-user-access-cookie-${user_id}`)
-    }
-
-    const handleAutoCancelReserve = () => {
-        const user_id = localStorage.getItem('user_id')
-        const queueType = reserveQueueType?.split(":")[0]
-
-        removeAllowUser(user_id, queueType)
-        clearTimerSession(user_id)
-        navigate('/')
-    }
-
     const handleCancelReserve = () => {
         const confirm = window.confirm("예매를 취소하시겠습니까 ?")
         if (!confirm) return;
@@ -77,7 +67,14 @@ const PerformanceSchedule = () => {
         const queueType = reserveQueueType?.split(":")[0]
 
         removeAllowUser(user_id, queueType)
-        clearTimerSession(user_id)
+
+        sessionStorage.removeItem(`timerStarted_${user_id}`)
+        localStorage.removeItem('user_id')
+        localStorage.removeItem('expireTime')
+        localStorage.removeItem('reserve_queue_type')
+        localStorage.removeItem('performance_id')
+        Cookies.remove(`reserve-user-access-cookie-${user_id}`)
+
         navigate('/')
     }
 
@@ -107,7 +104,6 @@ const PerformanceSchedule = () => {
 
         if (!token || !user_id) {
             alert("인증되지 않은 사용자입니다.");
-            handleCancelReserve()
             navigate('/')
             return
         }
@@ -122,7 +118,6 @@ const PerformanceSchedule = () => {
 
             if (!response.data) {
                 alert("잘못된 인증입니다.")
-                handleCancelReserve()
                 navigate('/')
                 return
             }
@@ -143,27 +138,7 @@ const PerformanceSchedule = () => {
             localStorage.setItem('expireTime', newExpire.toString())
             sessionStorage.setItem(sessionKey, 'true')
         }
-
-        const expire = Number.parseInt(localStorage.getItem('expireTime') || '0', 10)
-        const diff = Math.floor((expire - Date.now()) / 1000)
-        setSecondsLeft(Math.max(diff, 0))
-
-        const interval = setInterval(() => {
-            const now = Date.now()
-            const expireTime = Number.parseInt(localStorage.getItem('expireTime') || '0', 10)
-            const remaining = Math.floor((expireTime - now) / 1000)
-
-            if (remaining <= 0) {
-                clearInterval(interval)
-                clearTimerSession(user_id)
-                handleAutoCancelReserve()
-            } else {
-                setSecondsLeft(remaining)
-            }
-        }, 1000)
-
-        return () => clearInterval(interval)
-    }, [navigate])
+    }, [])
 
     useEffect(() => {
         verifyToken()
