@@ -32,7 +32,7 @@
 
 [ 공연 스케줄 페이지 ]
 
-<img width="1584" height="712" alt="타이머" src="https://github.com/user-attachments/assets/318edda0-c3ea-44a9-805b-019a618fb832" />
+<img width="1584" height="712" alt="타이머" src="https://github.com/user-attachments/assets/318edda0-c3ea-44a9-805b-019a618fb832" /><br><br>
 
 
 [ 좌석 선택 페이지 ]
