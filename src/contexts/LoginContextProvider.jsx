@@ -42,6 +42,7 @@ const LoginContextProvider = ({ children }) => {
       return;
     }
 
+    // api를 통해 보내는 모든 요청에 Authorization: Bearer {토큰} 헤더가 자동으로 포함
     api.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
 
     let response;
@@ -69,11 +70,7 @@ const LoginContextProvider = ({ children }) => {
     }
   };
 
-
-
-  /**
-   * 로그인 세팅
-   */
+  // 로그인 세팅
   const loginSetting = (userData, accessToken) => {
     const { username, role, name, email, lastRewardDate, reward, credit, reserveList, createdAt, seats, startTime, endTime } = userData;
 
@@ -94,9 +91,7 @@ const LoginContextProvider = ({ children }) => {
     setRoles(updatedRoles);
   };
 
-  /**
-   * 로그아웃 요청
-   */
+  // 로그아웃 요청
   const logout = () => {
     const check = window.confirm("로그아웃 하시겠습니까 ?");
 
@@ -107,18 +102,13 @@ const LoginContextProvider = ({ children }) => {
     }
   };
 
-  /**
-   * 로그아웃 세팅
-   */
+  // 로그아웃 세팅
   const logoutSetting = () => {
     api.defaults.headers.common.Authorization = undefined;
 
     Cookies.remove("accessToken");
-
     setIsLogin(false);
-
     setUserInfo(null);
-
     setRoles({ isUser: false, isAdmin: false });
   };
 

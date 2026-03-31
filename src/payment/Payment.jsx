@@ -41,28 +41,18 @@ const Payment = () => {
             rewardDiscountAmount: discount
         };
 
-        const MAX_RETRIES = 3;
-
         try {
-            for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-                try {
-                    await auth.payAndReserve(paymentInfo, headers);
-                    handleCancelReserve();
-                    alert("[ 예약 완료 ] 결제가 성공적으로 완료되었습니다.");
-                    navigate("/");
-                    return;
-                } catch (e) {
-                    if (e.response) {
-                        alert(e.response.data.message || "예약에 실패했습니다.");
-                        return;
-                    }
-                    if (attempt < MAX_RETRIES - 1) {
-                        await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
-                        continue;
-                    }
-                    alert("네트워크 오류가 발생했습니다. 다시 시도해주세요.");
-                    return;
-                }
+            await auth.payAndReserve(paymentInfo, headers);
+            handleCancelReserve();
+            alert("[ 예약 완료 ] 결제가 성공적으로 완료되었습니다.");
+            navigate("/");
+        } catch (e) {
+            const data = e.response?.data;
+            const msg = data?.message || data;
+            if (msg === "NOT_ENOUGH_CREDIT") {
+                alert("잔액이 부족합니다. 다시 시도해주세요.");
+            } else {
+                alert(msg || "결제에 실패했습니다. 다시 시도해주세요.");
             }
         } finally {
             setIsLoading(false);
