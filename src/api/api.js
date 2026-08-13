@@ -11,12 +11,12 @@ const PUBLIC_URLS = [
 const isPublicUrl = (url) => PUBLIC_URLS.some(u => url?.includes(u));
 
 const api = axios.create({
-  baseURL: 'http://localhost:8079',
+  baseURL: 'http://localhost:8080',
   withCredentials: true,
 });
 
 const reTokenApi = axios.create({
-  baseURL: 'http://localhost:8079',
+  baseURL: 'http://localhost:8080',
   withCredentials: true,
 });
 

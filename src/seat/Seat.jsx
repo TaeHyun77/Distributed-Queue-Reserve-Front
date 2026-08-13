@@ -20,6 +20,7 @@ const Seat = () => {
     const [selectedSeats, setSelectedSeats] = useState([]);
     const [personCount, setPersonCount] = useState(1);
     const [seatAmount, setSeatAmount] = useState(0);
+    const [isHolding, setIsHolding] = useState(false);
 
     const totalRows = 5;
     const totalCols = 5;
@@ -63,21 +64,45 @@ const Seat = () => {
         }
     };
 
-    const goToPayment = () => {
+    const goToPayment = async () => {
         if (selectedSeats.length === 0) {
             alert("좌석을 선택해주세요!");
             return;
         }
+        if (isHolding) return;
+        setIsHolding(true);
 
-        navigate("/payment", {
-            state: {
-                queueType,
+        try {
+            const response = await auth.holdSeats({
+                seatNumbers: selectedSeats,
                 performanceScheduleId,
-                seats: selectedSeats,
-                personCount,
-                seatAmount
+            });
+            const { heldUntil } = response.data;
+
+            navigate("/payment", {
+                state: {
+                    queueType,
+                    performanceScheduleId,
+                    seats: selectedSeats,
+                    personCount,
+                    seatAmount,
+                    heldUntil,
+                }
+            });
+        } catch (e) {
+            const status = e.response?.status;
+            const code = e.response?.data?.code ?? e.response?.data?.message ?? e.response?.data;
+            if (status === 409 || code === 'SEAT_ALREADY_HELD') {
+                alert("이미 선택된 좌석입니다. 좌석을 다시 선택해주세요.");
+            } else if (status === 400) {
+                alert("잘못된 요청입니다. 다시 시도해주세요.");
+            } else {
+                alert("좌석 선점에 실패했습니다. 다시 시도해주세요.");
             }
-        });
+            await getSeatList();
+        } finally {
+            setIsHolding(false);
+        }
     };
 
     const increasePerson = () => {
@@ -191,8 +216,8 @@ const Seat = () => {
                                 </div>
                             </div>
 
-                            <button className="reserve-button" onClick={goToPayment}>
-                                예매하기
+                            <button className="reserve-button" onClick={goToPayment} disabled={isHolding}>
+                                {isHolding ? "처리 중..." : "예매하기"}
                             </button>
                         </div>
                     ) : (

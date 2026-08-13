@@ -1,5 +1,8 @@
 import api from './api';
 
+// 대기열 서비스는 별도 포트(8079)를 사용 - 나머지 API는 api 인스턴스 기본값(8080)
+const QUEUE_BASE_URL = 'http://localhost:8079';
+
 
 // --- 유저 ---
 
@@ -14,6 +17,10 @@ export const join = (data) => api.post('/reserve/member/create', data);
 
 // 회원 정보
 export const info = () => api.get('/reserve/member/info');
+
+export const sendEmailCode = (email) => api.post("/member/email/send-code", { email });    
+                                                                                            
+export const verifyEmailCode = (email, code) => api.post("/member/email/verify-code", { email, code });
 
 // username 유효성 검사
 export const checkUsername = (username) => api.get(`/reserve/member/check/validation/${username}`);
@@ -40,12 +47,19 @@ export const seatPrice = (performanceId) => api.get(`/reserve/seat/price/${perfo
 
 // --- 예약 ---
 
-// 예약
-export const payAndReserve = (seatsInfo, headers = {}) => {
-    return api.post('/reserve', seatsInfo, { headers });
-};
+// 좌석 선점 (결제창 진입 전 호출, 응답: { heldUntil })
+export const holdSeats = (body) =>
+    api.post('/reserve/hold', body);
 
-// 예약 취소
+// 결제 확정 (idempotency-key 헤더 필수, 재시도 시 같은 키 재사용)
+export const confirmReservation = (body, headers = {}) =>
+    api.post('/reserve/confirm', body, { headers });
+
+// 좌석 선점 해제 (결제창 이탈 시 즉시 반납, 미호출 시 5분 후 자동 해제)
+export const releaseSeats = (body) =>
+    api.post('/reserve/release', body);
+
+// 예약 취소 (예약 완료 후 취소용 — 결제창 흐름과 무관)
 export const cancelReservation = (reserveNumber, headers = {}) => {
     return api.delete(`/reserve/delete/${reserveNumber}`, { headers });
 };
@@ -64,17 +78,17 @@ export const getMyReservations = () => api.get(`/reserve/get/list`);
 
 // 대기열 등록
 export const register = (body, headers = {}) => {
-    return api.post('/queue/register', body, { headers });
+    return api.post('/queue/register', body, { headers, baseURL: QUEUE_BASE_URL });
 };
 
 // 허용열에서 등록 취소
 export const cancelQueue = (body) => {
-    return api.post('/queue/cancel', body);
+    return api.post('/queue/cancel', body, { baseURL: QUEUE_BASE_URL });
 };
 
 // 토큰 유효성 검사
 export const tokenValidation = (body, token) => api.post(
-    `/queue/isValidateToken/${token}`, body
+    `/queue/isValidateToken/${token}`, body, { baseURL: QUEUE_BASE_URL }
 );
 
 // 토큰 쿠키 저장
@@ -82,4 +96,9 @@ export const createQueueCookie = (queueType, userId) =>
     api.get('/queue/create/cookie', {
         params: { queueType, userId },
         withCredentials: true,
+        baseURL: QUEUE_BASE_URL,
     });
+
+// 새로고침 시 대기열 맨 뒤로 이동 — SSE 연결 전에 호출해야 init이 밀린 순번을 전달함
+export const moveToTail = (queueType, userId) =>
+    api.post('/queue/move-to-tail', { queueType, userId }, { baseURL: QUEUE_BASE_URL });

@@ -16,18 +16,24 @@ const LoginContextProvider = ({ children }) => {
   const [roles, setRoles] = useState({ isUser: false, isAdmin: false });
 
   // 로그인 요청
-  const login = async (username, password) => {
-    const response = await auth.login(username, password);
+  const login = async (username, password) => {                                                                                                                                          
+    try {                                                                                                                                                                              
+      const response = await auth.login(username, password);
 
-    if (response.status === 200) {
-      const accessToken = response.headers['access'];  
+      const accessToken = response.headers['access'];
       Cookies.set("accessToken", accessToken, { secure: true, sameSite: 'Strict' });
 
       loginCheck();
       alert(`로그인 성공`);
       navigate("/");
-    } else {
-      alert(`로그인 실패`);
+    } catch (error) {
+      const errorData = error.response?.data;
+
+      if (errorData?.message) {
+        alert(errorData.message);
+      } else {
+        alert(`로그인 실패`);
+      }
     }
   };
 
@@ -104,7 +110,7 @@ const LoginContextProvider = ({ children }) => {
 
   // 로그아웃 세팅
   const logoutSetting = () => {
-    api.defaults.headers.common.Authorization = undefined;
+    delete api.defaults.headers.common.Authorization;
 
     Cookies.remove("accessToken");
     setIsLogin(false);

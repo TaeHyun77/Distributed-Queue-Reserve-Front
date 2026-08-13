@@ -1,5 +1,5 @@
 import Cookies from 'js-cookie';
-import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import * as auth from "../api/auth";
 import { LoginContext } from "../contexts/LoginContextProvider";
@@ -72,6 +72,19 @@ const QUEUE_BASE_URL = "http://localhost:8079";
 const MAX_COOKIE_RETRY = 3;
 const COOKIE_RETRY_DELAY_MS = 1000;
 
+// 대기열 관련 로컬 상태(스토리지 + 접속 쿠키) 정리. 예매 취소와 서버측 만료·취소 처리에서 공통 사용
+const clearQueueStorage = (userId) => {
+    localStorage.removeItem('user_id');
+    localStorage.removeItem('is_waiting');
+    localStorage.removeItem('reserve_queue_type');
+    localStorage.removeItem('performance_id');
+    localStorage.removeItem('expireTime');
+
+    if (userId) {
+        Cookies.remove(`reserve-user-access-cookie-${userId}`);
+    }
+};
+
 const Performance = () => {
     const navigate = useNavigate();
 
@@ -87,6 +100,11 @@ const Performance = () => {
     const [isWaiting, setIsWaiting] = useState(false);
     const [ranking, setRanking] = useState(null);
     const [confirmed, setConfirmed] = useState(false);
+
+    // 접속 시 받은 앵커. moved 이벤트의 절대 커서로 rank = R0 - (A - A0)를 계산한다.
+    // 리스너 클로저가 최신 값을 참조해야 하므로 state가 아닌 ref로 관리
+    const r0Ref = useRef(null); // init rank(R0)
+    const a0Ref = useRef(0);    // init admittedThrough(A0)
 
     const getPerformanceList = useCallback(async () => {
         try {
@@ -145,7 +163,10 @@ const Performance = () => {
             const data = response.data;
     
             switch (data) {
-                case "REGISTERED":
+                // WAIT: 대기열 진입 후 SSE로 순번 갱신
+                // ALLOW: 즉시 참가열 진입 → SSE init이 곧바로 confirmed를 보내 예매 페이지로 이동
+                case "REGISTERED_WAIT":
+                case "REGISTERED_ALLOW":
                     alert(`${userInfo?.username}님, 대기열 등록 완료!`);
                     const fullQueueType = queueType + ":user-queue:wait";
     
@@ -174,6 +195,15 @@ const Performance = () => {
         }
     };
 
+    // 서버측 취소·만료·유실(cancelled) 시 대기 상태를 정리하고 홈으로 이동한다.
+    // 이미 서버에서 제거된 상태이므로 백엔드 취소 호출·확인창 없이 로컬 정리만 수행
+    const handleExpired = useCallback(() => {
+        const currentUserId = userId || localStorage.getItem('user_id');
+        clearQueueStorage(currentUserId);
+        alert('대기가 종료되었습니다. 다시 시도해주세요.');
+        navigate('/');
+    }, [userId, navigate]);
+
     useEffect(() => {
         if (!isWaiting || confirmed || !userId || !reserveQueueType) return;
 
@@ -185,14 +215,22 @@ const Performance = () => {
 
         sse.onopen = () => console.log("SSE 연결 성공!");
 
-        sse.onerror = (err) => {
-            console.error("SSE 연결 오류:", err);
-            sse.close();
-        };
-
+        // 접속 시 1회: 앵커(R0, A0) 저장. rank는 1부터, admittedThrough는 누적 승격 수
         sse.addEventListener("update", (event) => {
             const data = JSON.parse(event.data);
+            r0Ref.current = data.rank;
+            a0Ref.current = data.admittedThrough;
             setRanking(data.rank);
+        });
+
+        // 승격 팬아웃마다 절대 커서로 내 순번 재계산
+        sse.addEventListener("moved", (event) => {
+            // update(앵커)보다 먼저 도착하면 계산 불가 — 서버 merge 순서가 보장되지 않으므로 무시
+            if (r0Ref.current === null) return;
+
+            const data = JSON.parse(event.data);
+            const rank = r0Ref.current - (data.admittedThrough - a0Ref.current);
+            setRanking(Math.max(rank, 0)); // 표시용, 입장 확정은 confirmed로만 처리
         });
 
         sse.addEventListener("confirmed", async () => {
@@ -215,7 +253,20 @@ const Performance = () => {
             }
         });
 
+        // 본인 취소·만료·유실 → 대기 종료
+        sse.addEventListener("cancelled", () => {
+            sse.close();
+            handleExpired();
+        });
+
+        // EventSource는 연결 레벨 오류도 error로 디스패치하지만 이때는 data가 없음.
+        // 연결 오류는 자동 재연결(백엔드 init이 앵커를 재전송)에 맡기고, 서버가 보낸 error 이벤트만 종료 처리
         sse.addEventListener("error", (event) => {
+            if (!event.data) {
+                console.error("SSE 연결 오류, 자동 재연결 대기");
+                return;
+            }
+
             try {
                 const data = JSON.parse(event.data);
                 alert(data.message || "대기열 정보가 없습니다.");
@@ -226,7 +277,7 @@ const Performance = () => {
         });
 
         return () => sse.close();
-    }, [isWaiting, confirmed, userId, reserveQueueType, performanceId, venueId, navigate]);
+    }, [isWaiting, confirmed, userId, reserveQueueType, performanceId, venueId, navigate, handleExpired]);
 
     const handleCancelQueue = async () => {
         const confirm = window.confirm("예매를 취소하시겠습니까?");
@@ -255,13 +306,7 @@ const Performance = () => {
             return;
         }
 
-        localStorage.removeItem('user_id');
-        localStorage.removeItem('is_waiting');
-        localStorage.removeItem('reserve_queue_type');
-        localStorage.removeItem('performance_id');
-        localStorage.removeItem('expireTime');
-
-        Cookies.remove(`reserve-user-access-cookie-${currentUserId}`);
+        clearQueueStorage(currentUserId);
 
         alert("예매 취소가 완료되었습니다.");
         navigate('/');
@@ -273,13 +318,27 @@ const Performance = () => {
         const savedQueueType = localStorage.getItem("reserve_queue_type");
         const savedPerformanceId = localStorage.getItem("performance_id");
 
-        if (savedUserId && waiting && savedQueueType) {
-            setUserId(savedUserId);
-            setIsWaiting(true);
-            setReserveQueueType(savedQueueType);
+        if (!savedUserId || !waiting || !savedQueueType) return;
 
+        const restore = async () => {
+            const queueType = savedQueueType.split(":")[0];
+
+            try {
+                // move-to-tail 완료를 기다린 뒤 SSE를 연결해야
+                // init(update)이 밀린 뒤의 순번을 앵커로 전달함
+                await auth.moveToTail(queueType, savedUserId);
+            } catch (err) {
+                // 실패 시 옛 순번 유지 (안전한 방향) — SSE init이 현재 상태를 재동기화
+                console.error("move-to-tail 실패, 기존 순번 유지:", err);
+            }
+
+            setUserId(savedUserId);
+            setReserveQueueType(savedQueueType);
             if (savedPerformanceId) setPerformanceId(savedPerformanceId);
-        }
+            setIsWaiting(true); // SSE 연결은 이 시점 이후에 트리거됨
+        };
+
+        restore();
     }, []);
 
     useEffect(() => {
