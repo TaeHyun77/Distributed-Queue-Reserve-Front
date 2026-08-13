@@ -9,6 +9,14 @@ const JoinForm = () => {
   const [username, setUsername] = useState("");
   const [usernameChecked, setUsernameChecked] = useState(false);
 
+  // 이메일 인증 상태
+  const [email, setEmail] = useState("");
+  const [emailCode, setEmailCode] = useState("");
+  const [emailSent, setEmailSent] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailVerifying, setEmailVerifying] = useState(false);
+
   const onJoin = (e) => {
     e.preventDefault();
 
@@ -17,12 +25,17 @@ const JoinForm = () => {
       return;
     }
 
+    if (!emailVerified) {
+      alert("이메일 인증을 완료해주세요");
+      return;
+    }
+
     const form = e.target;
     const user = {
       username,
       password: form.password.value.trim(),
       name: form.name.value.trim(),
-      email: form.email.value.trim(),
+      email,
     };
 
     join(user);
@@ -48,8 +61,16 @@ const JoinForm = () => {
         const messages = {
           DUPLICATED_USERNAME: "이미 사용 중인 아이디입니다.",
           INVALID_USERNAME: "유효하지 않은 아이디입니다.",
+          EMAIL_NOT_VERIFIED: "이메일 인증이 만료되었습니다. 다시 인증해주세요.",
           FAIL_TO_SAVE_DATA: "회원가입 중 오류 발생",
         };
+
+        if (errorCode === "EMAIL_NOT_VERIFIED") {
+          setEmailVerified(false);
+          setEmailSent(false);
+          setEmailCode("");
+        }
+
         alert(messages[errorCode] ?? "회원가입 중 오류 발생: " + (errorMessage || "알 수 없는 오류"));
       } else {
         alert("회원가입 중 오류 발생");
@@ -73,6 +94,58 @@ const JoinForm = () => {
         INVALID_USERNAME: "유효하지 않은 형식의 아이디입니다.",
       };
       alert(messages[errorCode] ?? "아이디 검증 실패 !");
+    }
+  };
+
+  // 인증번호 발송
+  const sendCode = async () => {
+    if (!email) {
+      alert("이메일을 입력해주세요");
+      return;
+    }
+
+    setEmailSending(true);
+    try {
+      await auth.sendEmailCode(email);
+      setEmailSent(true);
+      alert("인증번호가 발송되었습니다. 이메일을 확인해주세요.");
+    } catch (error) {
+      console.error("인증번호 발송 실패:", error);
+      alert("인증번호 발송에 실패했습니다.");
+    } finally {
+      setEmailSending(false);
+    }
+  };
+
+  // 인증번호 검증
+  const verifyCode = async () => {
+    if (!emailCode) {
+      alert("인증번호를 입력해주세요");
+      return;
+    }
+
+    setEmailVerifying(true);
+    try {
+      await auth.verifyEmailCode(email, emailCode);
+      setEmailVerified(true);
+      alert("이메일 인증이 완료되었습니다.");
+    } catch (error) {
+      console.error("인증번호 검증 실패:", error);
+      const errorCode = error?.response?.data?.code;
+
+      const messages = {
+        INVALID_VERIFICATION_CODE: "인증번호가 올바르지 않습니다.",
+        VERIFICATION_CODE_EXPIRED: "인증번호가 만료되었습니다. 다시 발송해주세요.",
+      };
+
+      if (errorCode === "VERIFICATION_CODE_EXPIRED") {
+        setEmailSent(false);
+        setEmailCode("");
+      }
+
+      alert(messages[errorCode] ?? "인증번호 검증에 실패했습니다.");
+    } finally {
+      setEmailVerifying(false);
     }
   };
 
@@ -139,14 +212,60 @@ const JoinForm = () => {
 
             <div className="form-field">
               <label htmlFor="email">이메일</label>
-              <input
-                type="email"
-                id="email"
-                placeholder="이메일을 입력하세요"
-                name="email"
-                autoComplete="email"
-                required
-              />
+              <div className="input-with-btn">
+                <input
+                  type="email"
+                  id="email"
+                  placeholder="이메일을 입력하세요"
+                  name="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setEmailSent(false);
+                    setEmailVerified(false);
+                    setEmailCode("");
+                  }}
+                  disabled={emailVerified}
+                  required
+                />
+                <button
+                  type="button"
+                  className="btn-check"
+                  onClick={sendCode}
+                  disabled={emailVerified || emailSending}
+                >
+                  {emailSending ? "발송 중..." : emailSent ? "재발송" : "인증번호 발송"}
+                </button>
+              </div>
+
+              {emailSent && !emailVerified && (
+                <div className="input-with-btn" style={{ marginTop: "8px" }}>
+                  <input
+                    type="text"
+                    placeholder="인증번호 6자리"
+                    value={emailCode}
+                    onChange={(e) => setEmailCode(e.target.value)}
+                    maxLength={6}
+                  />
+                  <button
+                    type="button"
+                    className="btn-check"
+                    onClick={verifyCode}
+                    disabled={emailVerifying}
+                  >
+                    {emailVerifying ? "확인 중..." : "인증 확인"}
+                  </button>
+                </div>
+              )}
+
+              <p className={emailVerified ? "status-ok" : "status-warn"}>
+                {emailVerified
+                  ? "✓ 이메일 인증이 완료되었습니다."
+                  : emailSent
+                  ? "인증번호를 입력해주세요. (5분 이내)"
+                  : "이메일 인증을 진행해주세요."}
+              </p>
             </div>
 
             <div className="auth-link-row">
